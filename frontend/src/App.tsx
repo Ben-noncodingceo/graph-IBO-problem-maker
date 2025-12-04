@@ -27,14 +27,16 @@ function App() {
 
   // Loading Message Rotation Logic
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: number | undefined;
     if (loading) {
       setLoadingMsgIndex(0); // Reset on start
       interval = setInterval(() => {
         setLoadingMsgIndex((prev) => prev + 1);
       }, 5000);
     }
-    return () => clearInterval(interval);
+    return () => {
+      if (interval !== undefined) clearInterval(interval);
+    };
   }, [loading]);
 
   const currentLoadingMessage = t.loadingMessages[loadingMsgIndex % t.loadingMessages.length];
