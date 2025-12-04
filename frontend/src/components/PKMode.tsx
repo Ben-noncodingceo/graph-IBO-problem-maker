@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import { useAppStore } from '../store/useAppStore'
 import { QuestionCard } from './QuestionCard'
 import { api, Question } from '../services/api'
