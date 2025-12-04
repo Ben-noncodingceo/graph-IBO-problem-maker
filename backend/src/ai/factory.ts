@@ -13,6 +13,9 @@ class OpenAICompatibleClient implements AIClient {
   async chat(messages: AIChatMessage[]): Promise<string> {
     const url = `${this.config.baseURL || 'https://api.openai.com/v1'}/chat/completions`;
     
+    // Log the request for debugging (security: mask api key)
+    console.log(`[AI] Calling ${url} with model ${this.config.modelName || this.defaultModel}`);
+
     const response = await fetch(url, {
       method: 'POST',
       headers: {
@@ -28,6 +31,7 @@ class OpenAICompatibleClient implements AIClient {
 
     if (!response.ok) {
       const errorText = await response.text();
+      console.error(`[AI] Error ${response.status}: ${errorText}`);
       throw new Error(`AI API Error (${response.status}): ${errorText}`);
     }
 
@@ -41,23 +45,17 @@ class GeminiClient implements AIClient {
   constructor(private apiKey: string) {}
 
   async chat(messages: AIChatMessage[]): Promise<string> {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${this.apiKey}`;
+    // Use user specified model: gemini-3-pro-preview
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:generateContent?key=${this.apiKey}`;
     
+    console.log(`[AI] Calling Gemini API (gemini-3-pro-preview)`);
+
     // Convert standard messages to Gemini format
     const contents = messages.map(msg => ({
-      role: msg.role === 'assistant' ? 'model' : 'user', // Gemini uses 'model' instead of 'assistant', system prompts handled differently usually but for simple chat 'user' is often fine or valid for system in v1beta
+      role: msg.role === 'assistant' ? 'model' : 'user', 
       parts: [{ text: msg.content }]
     }));
 
-    // Hack: Gemini Pro often works best if system prompt is merged into the first user message or set appropriately
-    // For simplicity in this v1 implementation, we treat all as content.
-    // If the first message is system, we might need to prepend it to the first user message or use system_instruction (newer API)
-    
-    // Simple adjustment:
-    // If msg.role is system, prepend to next user msg? 
-    // Let's just pass them for now, Gemini is robust. Or better, use system_instruction if available.
-    // Actually, v1beta/models/gemini-1.5-flash supports system_instruction. Let's stick to simple prompting for now.
-    
     const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -66,6 +64,7 @@ class GeminiClient implements AIClient {
 
     if (!response.ok) {
       const errorText = await response.text();
+      console.error(`[AI] Gemini Error ${response.status}: ${errorText}`);
       throw new Error(`Gemini API Error (${response.status}): ${errorText}`);
     }
 
@@ -85,7 +84,7 @@ export class AIFactory {
       case 'openai':
         return new OpenAICompatibleClient({ 
           apiKey, 
-          modelName: 'gpt-4o' // Default to GPT-4o
+          modelName: 'gpt-4o' 
         }, 'gpt-4o');
       
       case 'deepseek':
@@ -99,9 +98,13 @@ export class AIFactory {
         return new GeminiClient(apiKey);
         
       case 'doubao':
-         // Doubao usually requires specific SDK or complex signing, mocking as OpenAI compatible if using via Ark wrapper
-         // For now, let's treat it as placeholder or assuming OpenAI compatible endpoint if available
-         throw new Error("Doubao implementation requires specific SDK/Signing, skipping for this demo.");
+         // Assuming Doubao via ARK compatible API if key is provided
+         // https://ark.cn-beijing.volces.com/api/v3
+         return new OpenAICompatibleClient({
+           apiKey,
+           baseURL: 'https://ark.cn-beijing.volces.com/api/v3',
+           modelName: 'ep-20240604060406-doubao-pro-32k' // Example endpoint ID, user needs to config
+         }, 'doubao-pro-32k');
 
       case 'tongyi':
         return new OpenAICompatibleClient({

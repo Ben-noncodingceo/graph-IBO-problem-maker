@@ -5,30 +5,36 @@ import { KeywordInput } from './components/KeywordInput';
 import { SettingsPanel } from './components/SettingsPanel';
 import { PaperList } from './components/PaperList';
 import { QuestionCard } from './components/QuestionCard';
+import { HistoryPage } from './components/HistoryPage';
+import { DebugPage } from './components/DebugPage';
 import { useAppStore, useTranslation } from './store/useAppStore';
 import { api, Paper, Question } from './services/api';
-import { Search, Loader2, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Search, Loader2, ArrowRight, ArrowLeft, Settings, RefreshCw } from 'lucide-react';
 
 function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [loading, setLoading] = useState<string | null>(null);
-  const [view, setView] = useState<'home' | 'results' | 'questions'>('home');
+  const [view, setView] = useState<'home' | 'results' | 'questions' | 'history' | 'debug'>('home');
   const [papers, setPapers] = useState<Paper[]>([]);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [selectedPaper, setSelectedPaper] = useState<Paper | null>(null);
 
-  const { selectedSubject, keywords, selectedModel, apiKeys } = useAppStore();
+  const { selectedSubject, keywords, selectedModel, apiKeys, addLog, addToHistory } = useAppStore();
   const { t } = useTranslation();
 
   const handleSearch = async () => {
     if (!selectedSubject) return;
     
     setLoading(t.searching);
+    addLog({ type: 'info', message: `Searching papers for: ${selectedSubject}`, details: { keywords } });
+    
     try {
       const results = await api.searchPapers(selectedSubject, keywords);
+      addLog({ type: 'api', message: `Search API Success: Found ${results.length} papers` });
       setPapers(results);
       setView('results');
     } catch (err) {
+      addLog({ type: 'error', message: 'Search API Failed', details: err });
       alert('Search failed. Please ensure the Backend is running.');
       console.error(err);
     } finally {
@@ -36,21 +42,37 @@ function App() {
     }
   };
 
+  const handleShufflePapers = async () => {
+    // Re-trigger search to get a shuffled list (SearchService already shuffles mock data)
+    await handleSearch();
+  };
+
   const handleGenerate = async (paper: Paper) => {
     if (!selectedSubject) return;
     
-    // Get API Key if provided by user, otherwise use empty string (Backend will use Secret)
     const currentKey = apiKeys[selectedModel] || '';
+    addLog({ type: 'info', message: `Generating questions using ${selectedModel}`, details: { paper: paper.title } });
 
     setSelectedPaper(paper);
     setLoading('Generating Questions... This may take 30s+');
     
     try {
       const generated = await api.generateQuestions(paper, selectedSubject, selectedModel, currentKey);
+      addLog({ type: 'api', message: `Generate API Success`, details: generated });
+      
       setQuestions(generated);
+      
+      // Save to History
+      addToHistory({
+        subject: selectedSubject,
+        paperTitle: paper.title,
+        questions: generated
+      });
+
       setView('questions');
     } catch (err) {
-      alert('Generation failed. Check console for details.');
+      addLog({ type: 'error', message: 'Generate API Failed', details: err });
+      alert('Generation failed. Check Debug Console for details.');
       console.error(err);
     } finally {
       setLoading(null);
@@ -65,7 +87,12 @@ function App() {
   };
 
   return (
-    <Layout onOpenSettings={() => setIsSettingsOpen(true)}>
+    <Layout 
+      onOpenSettings={() => setIsSettingsOpen(true)}
+      onOpenHistory={() => setView('history')}
+      onOpenDebug={() => setView('debug')}
+      onGoHome={handleReset}
+    >
       <div className="space-y-12">
         {/* Header Section (Show only on Home) */}
         {view === 'home' && (
@@ -89,7 +116,14 @@ function App() {
             <KeywordInput />
 
             {selectedSubject && (
-              <div className="flex justify-end pt-4">
+              <div className="flex justify-end pt-4 gap-3">
+                <button
+                  onClick={() => setIsSettingsOpen(true)}
+                  className="flex items-center justify-center p-4 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-colors"
+                  title={t.settingsTitle}
+                >
+                  <Settings className="w-5 h-5" />
+                </button>
                 <button
                   onClick={handleSearch}
                   disabled={!!loading}
@@ -116,13 +150,25 @@ function App() {
         {/* Results View */}
         {view === 'results' && (
           <div className="max-w-4xl mx-auto animate-in fade-in slide-in-from-right duration-300">
-            <button 
-              onClick={() => setView('home')}
-              className="flex items-center gap-2 text-gray-500 hover:text-gray-900 mb-6 transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Back to Search
-            </button>
+            <div className="flex items-center justify-between mb-6">
+              <button 
+                onClick={() => setView('home')}
+                className="flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Back to Search
+              </button>
+              
+              {!loading && (
+                <button 
+                  onClick={handleShufflePapers}
+                  className="flex items-center gap-2 text-blue-600 hover:text-blue-800 text-sm font-medium hover:bg-blue-50 px-3 py-1.5 rounded-lg transition-colors"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  Refresh Papers
+                </button>
+              )}
+            </div>
             
             {loading ? (
               <div className="flex flex-col items-center justify-center py-20">
@@ -168,6 +214,20 @@ function App() {
                 <QuestionCard key={idx} question={q} index={idx} />
               ))}
             </div>
+          </div>
+        )}
+
+        {/* History View */}
+        {view === 'history' && (
+          <div className="max-w-3xl mx-auto">
+             <HistoryPage />
+          </div>
+        )}
+
+        {/* Debug View */}
+        {view === 'debug' && (
+          <div className="max-w-4xl mx-auto">
+             <DebugPage />
           </div>
         )}
       </div>

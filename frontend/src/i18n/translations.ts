@@ -27,8 +27,15 @@ export const TRANSLATIONS = {
     
     footer: 'Powered by Cloudflare Workers & Multi-Modal AI',
     
+    // New Translations
+    debugTitle: 'Debug Console',
+    clearLogs: 'Clear Logs',
+    noLogs: 'No logs recorded yet. Perform some actions to see logs here.',
+    historyTitle: 'Generated History',
+    noHistory: 'No questions generated yet. Start exploring papers!',
+    
     models: {
-      gemini: { name: 'Google Gemini', desc: 'Best overall performance & speed' },
+      gemini: { name: 'Google Gemini (gemini-3-pro-preview)', desc: 'Best overall performance & speed' },
       gpt4: { name: 'OpenAI GPT-4', desc: 'High reasoning capability' },
       deepseek: { name: 'DeepSeek', desc: 'Cost-effective & strong logic' },
       doubao: { name: 'Doubao (豆包)', desc: 'Optimized for Chinese context' },
@@ -61,8 +68,15 @@ export const TRANSLATIONS = {
     
     footer: '基于 Cloudflare Workers & 多模态 AI 构建',
     
+    // New Translations
+    debugTitle: '调试控制台',
+    clearLogs: '清空日志',
+    noLogs: '暂无日志记录。进行一些操作后将在此显示。',
+    historyTitle: '生成历史',
+    noHistory: '暂无生成记录。快去探索文献吧！',
+    
     models: {
-      gemini: { name: 'Google Gemini', desc: '综合性能与速度最佳' },
+      gemini: { name: 'Google Gemini (gemini-3-pro-preview)', desc: '综合性能与速度最佳' },
       gpt4: { name: 'OpenAI GPT-4', desc: '强大的推理能力' },
       deepseek: { name: 'DeepSeek', desc: '高性价比与强逻辑' },
       doubao: { name: '豆包 (Doubao)', desc: '中文语境优化' },

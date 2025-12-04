@@ -2,7 +2,7 @@ import { AIClient } from '../ai/types';
 import { Paper } from './search';
 
 export interface Question {
-  id: string; // generated UUID or index
+  id: string; // T-YYYYMMDD-XXXX
   type: 'Multiple Choice';
   difficulty: 'Easy' | 'Medium' | 'Hard';
   scenario: string;
@@ -57,10 +57,13 @@ export class QuestionGenerator {
 
       const questions = JSON.parse(jsonStr) as any[];
       
-      // Add IDs
+      // Generate ID: T-YYYYMMDD-XXXX
+      const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+      const randomBase = Math.floor(1000 + Math.random() * 9000);
+
       return questions.map((q, idx) => ({
         ...q,
-        id: `gen-${Date.now()}-${idx}`,
+        id: `T-${dateStr}-${randomBase + idx}`,
         type: 'Multiple Choice'
       }));
 

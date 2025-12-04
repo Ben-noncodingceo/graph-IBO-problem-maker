@@ -7,6 +7,22 @@ export type AIModel = 'gemini' | 'openai' | 'deepseek' | 'doubao' | 'tongyi';
 
 export { IBO_SUBJECTS, type IboSubject };
 
+export interface LogEntry {
+  id: string;
+  timestamp: number;
+  type: 'info' | 'error' | 'api';
+  message: string;
+  details?: any;
+}
+
+export interface HistoryEntry {
+  id: string;
+  timestamp: number;
+  subject: string;
+  paperTitle: string;
+  questions: any[];
+}
+
 interface AppState {
   // Configuration
   language: Language;
@@ -17,6 +33,10 @@ interface AppState {
   selectedSubject: IboSubject | null;
   keywords: string[];
   
+  // Data
+  logs: LogEntry[];
+  history: HistoryEntry[];
+  
   // Actions
   setLanguage: (lang: Language) => void;
   setModel: (model: AIModel) => void;
@@ -25,12 +45,16 @@ interface AppState {
   addKeyword: (keyword: string) => void;
   removeKeyword: (keyword: string) => void;
   clearKeywords: () => void;
+  
+  addLog: (entry: Omit<LogEntry, 'id' | 'timestamp'>) => void;
+  clearLogs: () => void;
+  addToHistory: (entry: Omit<HistoryEntry, 'id' | 'timestamp'>) => void;
 }
 
 export const useAppStore = create<AppState>()(
   persist(
     (set) => ({
-      language: 'zh', // Default to Chinese as requested
+      language: 'zh', // Default to Chinese
       selectedModel: 'gemini',
       apiKeys: {
         gemini: '',
@@ -41,6 +65,8 @@ export const useAppStore = create<AppState>()(
       },
       selectedSubject: null,
       keywords: [],
+      logs: [],
+      history: [],
 
       setLanguage: (lang) => set({ language: lang }),
       setModel: (model) => set({ selectedModel: model }),
@@ -61,14 +87,31 @@ export const useAppStore = create<AppState>()(
       })),
       
       clearKeywords: () => set({ keywords: [] }),
+
+      addLog: (entry) => set((state) => ({
+        logs: [
+          { ...entry, id: Math.random().toString(36).substr(2, 9), timestamp: Date.now() },
+          ...state.logs
+        ].slice(0, 100) // Keep last 100 logs
+      })),
+
+      clearLogs: () => set({ logs: [] }),
+
+      addToHistory: (entry) => set((state) => ({
+        history: [
+          { ...entry, id: Math.random().toString(36).substr(2, 9), timestamp: Date.now() },
+          ...state.history
+        ]
+      })),
     }),
     {
       name: 'bio-oly-storage',
       partialize: (state) => ({ 
         language: state.language,
         selectedModel: state.selectedModel,
-        apiKeys: state.apiKeys 
-      }),
+        apiKeys: state.apiKeys,
+        history: state.history 
+      }), // Don't persist logs
     }
   )
 );
