@@ -2,6 +2,11 @@ import React, { useState } from 'react';
 import { Question } from '../services/api';
 import { ChevronUp, CheckCircle, HelpCircle, FileText, Image as ImageIcon, AlertTriangle } from 'lucide-react';
 import { useTranslation } from '../store/useAppStore';
+import ReactMarkdown from 'react-markdown';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css';
+import { buildImageProxyUrl } from '../services/api';
 
 interface QuestionCardProps {
   question: Question;
@@ -12,6 +17,9 @@ interface QuestionCardProps {
 export const QuestionCard: React.FC<QuestionCardProps> = ({ question, index, requestedMode = 'text' }) => {
   const [showAnswer, setShowAnswer] = useState(false);
   const { t } = useTranslation();
+  const [imgLoading, setImgLoading] = useState<boolean>(false);
+  const [imgError, setImgError] = useState<boolean>(false);
+  const [imgSrc, setImgSrc] = useState<string | undefined>(question.figureUrl);
 
   const difficultyColor = {
     'Easy': 'bg-green-100 text-green-800',
@@ -29,13 +37,27 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, index, req
             {t.contextTitle}
           </h4>
           
-          {question.figureUrl && (
+          {imgSrc && (
             <div className="mb-4">
               <img 
-                src={question.figureUrl} 
+                src={imgSrc} 
                 alt={t.imageAlt} 
                 className="rounded-lg border border-gray-200 max-h-64 object-contain bg-white mx-auto"
+                onLoad={() => { setImgLoading(false); setImgError(false); }}
+                onError={() => {
+                  if (!imgError && question.figureUrl) {
+                    setImgError(true);
+                    setImgLoading(true);
+                    setImgSrc(buildImageProxyUrl(question.figureUrl));
+                  } else {
+                    setImgSrc(undefined);
+                    setImgLoading(false);
+                  }
+                }}
               />
+              {imgLoading && (
+                <p className="text-center text-xs text-gray-500 mt-2">Loading image...</p>
+              )}
               <p className="text-center text-xs text-gray-500 mt-2 italic">
                 {t.figureCaption}
                 {question.figureSource ? (
@@ -57,7 +79,9 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, index, req
           
           {question.context && (
             <div className="text-sm text-slate-700 leading-relaxed font-serif bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
-              {question.context}
+              <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+                {question.context}
+              </ReactMarkdown>
             </div>
           )}
         </div>
@@ -74,7 +98,9 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, index, req
         <div className="prose max-w-none text-gray-900 mb-6">
           <p className="font-medium text-lg">
             <span className="text-gray-400 mr-2">{index + 1}.</span>
-            {question.scenario}
+            <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+              {question.scenario}
+            </ReactMarkdown>
           </p>
         </div>
 
@@ -98,7 +124,9 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, index, req
                   {label}
                 </span>
                 <span className={showAnswer && isCorrect ? 'text-green-900 font-medium' : 'text-gray-700'}>
-                  {opt}
+                  <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+                    {opt}
+                  </ReactMarkdown>
                 </span>
               </div>
             );
@@ -134,7 +162,9 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, index, req
               <h4 className="font-semibold mb-2 text-gray-900 flex items-center gap-2">
                 {t.analysisTitle}
               </h4>
-              {question.explanation}
+              <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+                {question.explanation}
+              </ReactMarkdown>
             </div>
           </div>
         )}

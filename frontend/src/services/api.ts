@@ -55,3 +55,5 @@ export const api = {
     return res.data.questions;
   }
 };
+
+export const buildImageProxyUrl = (url: string) => `${API_BASE}/proxy_image?url=${encodeURIComponent(url)}`;

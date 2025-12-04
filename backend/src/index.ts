@@ -93,6 +93,25 @@ export default {
         });
       }
 
+      // --- Route 3: Proxy Image ---
+      if (url.pathname === '/api/proxy_image' && request.method === 'GET') {
+        const target = url.searchParams.get('url') || '';
+        if (!target || !/^https?:\/\//i.test(target)) {
+          return new Response(JSON.stringify({ error: 'Invalid image url' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        }
+        const upstream = await fetch(target, { method: 'GET' });
+        if (!upstream.ok) {
+          return new Response(JSON.stringify({ error: `Upstream ${upstream.status}` }), { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        }
+        const ct = upstream.headers.get('Content-Type') || '';
+        const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/svg+xml'];
+        if (!allowed.some(a => ct.toLowerCase().includes(a))) {
+          return new Response(JSON.stringify({ error: 'Unsupported media type' }), { status: 415, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        }
+        const arrayBuf = await upstream.arrayBuffer();
+        return new Response(arrayBuf, { status: 200, headers: { ...corsHeaders, 'Content-Type': ct, 'Cache-Control': 'public, max-age=3600' } });
+      }
+
       return new Response("BioOlyAI Backend API Running", { headers: corsHeaders });
     } catch (err: any) {
       console.error(err);
