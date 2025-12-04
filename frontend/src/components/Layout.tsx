@@ -88,7 +88,9 @@ export const Layout: React.FC<LayoutProps> = ({
           <p className="text-center text-sm text-gray-500">
             {t.footer}
           </p>
-          <p className="text-center text-sm text-gray-700 mt-2">联系作者： <a href="mailto:sunpeng@eduzhixin.com" className="underline">sunpeng@eduzhixin.com</a></p>
+          <p className="text-center text-sm text-gray-700 mt-2">contact author: <a href="mailto:sunpeng@eduzhixin.com" className="underline">sunpeng@eduzhixin.com</a></p>
+          <p className="text-center text-sm text-gray-700 mt-1">联系作者： <a href="mailto:sunpeng@eduzhixin.com" className="underline">sunpeng@eduzhixin.com</a></p>
+          <p className="text-center text-xs text-gray-500 mt-2">Copyright ©2025 北京质心教育科技有限公司</p>
         </div>
       </footer>
     </div>
