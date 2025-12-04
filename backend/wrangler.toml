@@ -1,6 +1,7 @@
 name = "graph-ibo-problem-maker"
 main = "src/index.ts"
 compatibility_date = "2024-07-01"
+send_metrics = false
 
 # D1 Database Binding
 [[d1_databases]]
