@@ -33,6 +33,8 @@ export const TRANSLATIONS = {
     noLogs: 'No logs recorded yet. Perform some actions to see logs here.',
     historyTitle: 'Generated History',
     noHistory: 'No questions generated yet. Start exploring papers!',
+    textMode: 'Text Only',
+    imageMode: 'With Figure',
     
     models: {
       gemini: { name: 'Google Gemini (gemini-3-pro-preview)', desc: 'Best overall performance & speed' },
@@ -74,6 +76,8 @@ export const TRANSLATIONS = {
     noLogs: '暂无日志记录。进行一些操作后将在此显示。',
     historyTitle: '生成历史',
     noHistory: '暂无生成记录。快去探索文献吧！',
+    textMode: '纯文字题',
+    imageMode: '图表题',
     
     models: {
       gemini: { name: 'Google Gemini (gemini-3-pro-preview)', desc: '综合性能与速度最佳' },

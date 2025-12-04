@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Question } from '../services/api';
-import { ChevronUp, CheckCircle, HelpCircle } from 'lucide-react';
+import { ChevronUp, CheckCircle, HelpCircle, FileText, Image as ImageIcon } from 'lucide-react';
 
 interface QuestionCardProps {
   question: Question;
@@ -18,6 +18,35 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, index }) =
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      {/* Context / Material Section */}
+      {(question.context || question.figureUrl) && (
+        <div className="bg-slate-50 border-b border-gray-200 p-6">
+          <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+            {question.figureUrl ? <ImageIcon className="w-4 h-4" /> : <FileText className="w-4 h-4" />}
+            Question Material / Context
+          </h4>
+          
+          {question.figureUrl && (
+            <div className="mb-4">
+              <img 
+                src={question.figureUrl} 
+                alt="Scientific Figure" 
+                className="rounded-lg border border-gray-200 max-h-64 object-contain bg-white mx-auto"
+              />
+              <p className="text-center text-xs text-gray-500 mt-2 italic">
+                * Simulated Figure for IBO Training *
+              </p>
+            </div>
+          )}
+          
+          {question.context && (
+            <div className="text-sm text-slate-700 leading-relaxed font-serif bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+              {question.context}
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="p-6">
         <div className="flex justify-between items-start mb-4">
           <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${difficultyColor}`}>
@@ -27,7 +56,10 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, index }) =
         </div>
 
         <div className="prose max-w-none text-gray-900 mb-6">
-          <p className="font-medium text-lg">{index + 1}. {question.scenario}</p>
+          <p className="font-medium text-lg">
+            <span className="text-gray-400 mr-2">{index + 1}.</span>
+            {question.scenario}
+          </p>
         </div>
 
         <div className="space-y-3">
@@ -38,14 +70,14 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, index }) =
             return (
               <div 
                 key={i}
-                className={`flex items-start p-3 rounded-lg border transition-all ${
+                className={`flex items-start p-3 rounded-lg border transition-all cursor-default ${
                   showAnswer && isCorrect 
-                    ? 'bg-green-50 border-green-200' 
-                    : 'bg-gray-50 border-transparent'
+                    ? 'bg-green-50 border-green-200 ring-1 ring-green-200' 
+                    : 'bg-white border-gray-200 hover:border-blue-300'
                 }`}
               >
                 <span className={`w-6 h-6 flex items-center justify-center rounded-full text-xs font-bold mr-3 shrink-0 ${
-                  showAnswer && isCorrect ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-700'
+                  showAnswer && isCorrect ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-500'
                 }`}>
                   {label}
                 </span>
@@ -61,7 +93,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, index }) =
       <div className="bg-gray-50 px-6 py-4 border-t border-gray-100">
         <button
           onClick={() => setShowAnswer(!showAnswer)}
-          className="flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
+          className="flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors w-full sm:w-auto justify-center sm:justify-start"
         >
           {showAnswer ? (
             <>
@@ -82,8 +114,10 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, index }) =
               <CheckCircle className="w-5 h-5" />
               Correct Answer: {question.correctAnswer}
             </div>
-            <div className="text-gray-700 bg-white p-4 rounded-lg border border-gray-200 text-sm leading-relaxed">
-              <h4 className="font-semibold mb-1 text-gray-900">Analysis:</h4>
+            <div className="text-gray-700 bg-white p-4 rounded-lg border border-gray-200 text-sm leading-relaxed shadow-sm">
+              <h4 className="font-semibold mb-2 text-gray-900 flex items-center gap-2">
+                Analysis & Scientific Reasoning
+              </h4>
               {question.explanation}
             </div>
           </div>

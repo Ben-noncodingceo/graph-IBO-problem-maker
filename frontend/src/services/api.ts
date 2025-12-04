@@ -18,11 +18,12 @@ export interface Question {
   id: string;
   type: string;
   difficulty: string;
+  context?: string; // New: Context text or figure description
+  figureUrl?: string; // New: Image URL
   scenario: string;
   options: string[];
   correctAnswer: string;
   explanation: string;
-  analysis: string; // Add alias for explanation/analysis display
 }
 
 export const api = {
@@ -35,11 +36,12 @@ export const api = {
     paper: Paper, 
     subject: string, 
     model: AIModel, 
-    apiKey: string
+    apiKey: string,
+    mode: 'text' | 'image' // New param
   ): Promise<Question[]> => {
     const res = await axios.post(
       `${API_BASE}/generate_questions`, 
-      { paper, subject },
+      { paper, subject, mode },
       {
         headers: {
           'x-model-type': model,
@@ -47,8 +49,6 @@ export const api = {
         }
       }
     );
-    // Ensure we handle potentially different response structures or alias fields if needed
-    // The backend returns { questions: Question[] }
     return res.data.questions;
   }
 };
