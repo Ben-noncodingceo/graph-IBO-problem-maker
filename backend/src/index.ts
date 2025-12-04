@@ -121,7 +121,7 @@ export default {
         const result = await generator.generateFromPaper(
           paper,
           subject,
-          (mode === 'image' ? 'image' : 'text'),
+          (mode === 'image' ? 'image' : (mode === 'analysis' ? 'analysis' : 'text')),
           (language === 'en' ? 'en' : 'zh')
         );
         let finalQuestions = result.questions;

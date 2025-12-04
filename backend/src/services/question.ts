@@ -16,7 +16,7 @@ export interface Question {
 export class QuestionGenerator {
   constructor(private aiClient: AIClient) {}
 
-  async generateFromPaper(paper: Paper, subject: string, mode: 'text' | 'image' = 'text', language: 'zh' | 'en' = 'zh'): Promise<{ questions: Question[]; meta: { modeUsed: 'text' | 'image'; imageFailReason?: string } }> {
+  async generateFromPaper(paper: Paper, subject: string, mode: 'text' | 'image' | 'analysis' = 'text', language: 'zh' | 'en' = 'zh'): Promise<{ questions: Question[]; meta: { modeUsed: 'text' | 'image' | 'analysis'; imageFailReason?: string } }> {
     const isImageModeRequested = mode === 'image';
     
     let extractedFigureUrl: string | undefined;
@@ -30,7 +30,7 @@ export class QuestionGenerator {
       Paper Title: ${paper.title}
       Paper Snippet: ${paper.snippet}
       Subject: ${subject}
-      Generation Mode: ${isImageModeRequested && extractedFigureUrl ? 'image' : 'text'}
+      Generation Mode: ${isImageModeRequested && extractedFigureUrl ? 'image' : (mode === 'analysis' ? 'analysis' : 'text')}
       Output Language: ${language === 'zh' ? 'Chinese (Simplified)' : 'English'}
       
       Specific Instructions:
@@ -39,11 +39,16 @@ export class QuestionGenerator {
         1. Use the existing figure from the selected paper; do not invent or simulate new figures.
         2. Provide a "context" field: A concise description (50-150 words) of what the displayed figure represents, aligned with axes labels or legend info.
         3. Ensure all questions require analyzing this described figure.
+      ` : (mode === 'analysis' ? `
+        MODE: DATA ANALYSIS
+        1. Provide a "context" field that includes a small numeric dataset (e.g., 4-8 rows) relevant to the paper topic. Use a simple table-like plain text format.
+        2. Ask calculation/analysis questions (e.g., fold change, rate, mean/SD, enrichment) based solely on the provided numbers.
+        3. The explanation must show step-by-step calculations and reasoning.
       ` : `
         MODE: TEXT ONLY
         1. Provide a "context" field: A detailed summary (50-300 words) of the paper's key findings, methodology, or theoretical background.
         2. This text MUST provide enough information for a student to deduce the correct answers without prior specific knowledge of this exact paper.
-      `}
+      `)}
       
       General Requirements:
       1. Generate 3 questions with increasing difficulty: Easy, Medium, Hard.
@@ -112,11 +117,12 @@ export class QuestionGenerator {
         id: `T-${dateStr}-${randomBase + idx}`,
         type: 'Multiple Choice',
         figureUrl: extractedFigureUrl,
-        figureSource: figureSource
+        figureSource: figureSource,
+        paperUrl: paper.link
       }));
 
       const meta = {
-        modeUsed: extractedFigureUrl ? 'image' as const : 'text' as const,
+        modeUsed: extractedFigureUrl ? 'image' as const : (mode === 'analysis' ? 'analysis' as const : 'text' as const),
         imageFailReason: extractedFigureUrl ? undefined : this.classifyImageFailReason(extractionReason)
       };
 

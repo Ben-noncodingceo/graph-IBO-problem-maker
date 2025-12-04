@@ -19,7 +19,7 @@ function App() {
   const [view, setView] = useState<'home' | 'results' | 'questions' | 'history' | 'debug'>('home');
   const [papers, setPapers] = useState<Paper[]>([]);
   const [questions, setQuestions] = useState<Question[]>([]);
-  const [currentMode, setCurrentMode] = useState<'text' | 'image'>('text');
+  const [currentMode, setCurrentMode] = useState<'text' | 'image' | 'analysis'>('text');
   const [selectedPaper, setSelectedPaper] = useState<Paper | null>(null);
   const [lastLanguageUsed, setLastLanguageUsed] = useState<'zh' | 'en'>('zh');
   const [questionsMeta, setQuestionsMeta] = useState<any>(null);
@@ -68,7 +68,7 @@ function App() {
     await handleSearch();
   };
 
-  const handleGenerate = async (paper: Paper, mode: 'text' | 'image') => {
+  const handleGenerate = async (paper: Paper, mode: 'text' | 'image' | 'analysis') => {
     if (!selectedSubject) return;
     
     const currentKey = apiKeys[selectedModel] || '';

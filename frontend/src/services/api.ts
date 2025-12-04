@@ -22,6 +22,7 @@ export interface Question {
   context?: string; // New: Context text or figure description
   figureUrl?: string; // New: Image URL
   figureSource?: string; // New: Source page URL when image is extracted
+  paperUrl?: string; // New: Original paper link
   scenario: string;
   options: string[];
   correctAnswer: string;
@@ -39,7 +40,7 @@ export const api = {
     subject: string, 
     model: AIModel, 
     apiKey: string,
-    mode: 'text' | 'image',
+    mode: 'text' | 'image' | 'analysis',
     language: Language
   ): Promise<{ questions: Question[]; meta?: any }> => {
     const res = await axios.post(

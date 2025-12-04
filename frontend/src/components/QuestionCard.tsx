@@ -38,6 +38,11 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, index, req
             {question.figureUrl ? <ImageIcon className="w-4 h-4" /> : <FileText className="w-4 h-4" />}
             {t.contextTitle}
           </h4>
+          {question.paperUrl && (
+            <p className="text-xs text-blue-700 mb-2">
+              {t.originalPaperLabel}: <a href={question.paperUrl} target="_blank" rel="noreferrer" className="underline">{question.paperUrl}</a>
+            </p>
+          )}
           
           {imgSrc && (
             <div className="mb-4">
@@ -172,6 +177,11 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, index, req
               <h4 className="font-semibold mb-2 text-gray-900 flex items-center gap-2">
                 {t.analysisTitle}
               </h4>
+              {question.paperUrl && (
+                <p className="text-xs text-blue-700 mb-2">
+                  {t.originalPaperLabel}: <a href={question.paperUrl} target="_blank" rel="noreferrer" className="underline">{question.paperUrl}</a>
+                </p>
+              )}
               <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
                 {question.explanation}
               </ReactMarkdown>

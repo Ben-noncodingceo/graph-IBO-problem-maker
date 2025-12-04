@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { Paper } from '../services/api';
-import { Calendar, User, ArrowRight, FileText, Image as ImageIcon } from 'lucide-react';
+import { Calendar, User, ArrowRight, FileText, Image as ImageIcon, Calculator } from 'lucide-react';
 import { useTranslation } from '../store/useAppStore';
 
 interface PaperListProps {
   papers: Paper[];
-  onSelect: (paper: Paper, mode: 'text' | 'image') => void;
+  onSelect: (paper: Paper, mode: 'text' | 'image' | 'analysis') => void;
   isGenerating: boolean;
 }
 
@@ -29,10 +29,10 @@ export const PaperList: React.FC<PaperListProps> = ({ papers, onSelect, isGenera
 
 const PaperItem: React.FC<{ 
   paper: Paper; 
-  onSelect: (paper: Paper, mode: 'text' | 'image') => void;
+  onSelect: (paper: Paper, mode: 'text' | 'image' | 'analysis') => void;
   isGenerating: boolean;
 }> = ({ paper, onSelect, isGenerating }) => {
-  const [mode, setMode] = useState<'text' | 'image'>('text');
+  const [mode, setMode] = useState<'text' | 'image' | 'analysis'>('text');
   const { t } = useTranslation();
 
   return (
@@ -70,6 +70,15 @@ const PaperItem: React.FC<{
             >
               <ImageIcon className="w-3 h-3" />
               {t.imageMode}
+            </button>
+            <button
+              onClick={() => setMode('analysis')}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                mode === 'analysis' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <Calculator className="w-3 h-3" />
+              {t.analysisMode}
             </button>
           </div>
 
