@@ -1,0 +1,33 @@
+name: Deploy to Cloudflare
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy
+    steps:
+      - uses: actions/checkout@v3
+      
+      # 部署前端到 Pages
+      - name: Build & Deploy Frontend
+        uses: cloudflare/pages-action@1
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: 'bio-oly-frontend'
+          directory: 'frontend/dist'
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+          workingDirectory: 'frontend'
+          command: npm install && npm run build
+          
+      # 部署后端到 Workers
+      - name: Deploy Backend Worker
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: 'backend'

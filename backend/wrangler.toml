@@ -1,0 +1,29 @@
+name = "bio-oly-backend"
+main = "src/index.ts"
+compatibility_date = "2024-07-01"
+
+# D1 Database Binding
+# [[d1_databases]]
+# binding = "DB"
+# database_name = "bio-db"
+# database_id = "INSERT-DATABASE-ID-HERE""695f55ec-a5c5-4c5e-8e4e-72bdb40e1160"
+
+# R2 Bucket Binding
+[[r2_buckets]]
+binding = "IMAGES"
+bucket_name = "bio-images"
+
+# AI Binding
+[ai]
+binding = "AI"
+
+[vars]
+# GEMINI_API_KEY = ""
+# OPENAI_API_KEY = ""
+# DEEPSEEK_API_KEY = ""
+# DOUBAO_API_KEY = ""
+# TONGYI_API_KEY = ""
+# SERPAPI_KEY = ""
+
+# [browser]
+# binding = "MYBROWSER"
