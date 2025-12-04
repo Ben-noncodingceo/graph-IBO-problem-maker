@@ -7,10 +7,32 @@ export const HistoryPage: React.FC = () => {
   const { history } = useAppStore();
   const { t } = useTranslation();
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [query, setQuery] = useState('');
 
   const toggleExpand = (id: string) => {
     setExpandedId(expandedId === id ? null : id);
   };
+
+  const stopwords = new Set(['the','and','for','with','from','into','this','that','have','has','are','was','were','will','shall','of','in','on','at','to','by','or','an','a','as']);
+  const tokens: Record<string, number> = {};
+  history.forEach(h => {
+    const texts = [h.paperTitle, h.subject, ...(h.keywords || []), ...h.questions.flatMap((q: any) => [q.scenario, q.context, q.explanation])];
+    texts.forEach(txt => {
+      if (!txt) return;
+      String(txt).toLowerCase().split(/[^a-z0-9]+/).forEach(w => {
+        if (w && w.length >= 3 && !stopwords.has(w)) tokens[w] = (tokens[w] || 0) + 1;
+      });
+    });
+  });
+  const popular = Object.entries(tokens).sort((a,b) => b[1]-a[1]).slice(0,10).map(([w]) => w);
+
+  const matches = (h: any): boolean => {
+    if (!query) return true;
+    const q = query.toLowerCase();
+    const fields = [h.paperTitle, h.subject, ...(h.keywords || []), ...h.questions.flatMap((x: any) => [x.id, x.scenario, x.context, x.explanation, x.paperUrl])];
+    return fields.some((f: any) => f && String(f).toLowerCase().includes(q));
+  };
+  const filtered = history.filter(matches);
 
   return (
     <div className="space-y-6 animate-in fade-in">
@@ -19,14 +41,34 @@ export const HistoryPage: React.FC = () => {
         {t.historyTitle}
       </h2>
 
-      {history.length === 0 ? (
+      <div className="bg-white rounded-xl border border-gray-200 p-4 flex flex-col gap-3">
+        <label className="text-sm font-medium text-gray-700">{t.historySearch}</label>
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder={t.historySearchPlaceholder}
+          className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none text-sm"
+        />
+        {popular.length > 0 && (
+          <div className="flex flex-wrap gap-2 items-center">
+            <span className="text-xs text-gray-500">{t.popularKeywords}:</span>
+            {popular.map((w) => (
+              <button key={w} onClick={() => setQuery(w)} className="text-xs px-2 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-100 hover:bg-blue-100">
+                {w}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {filtered.length === 0 ? (
         <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
           <HistoryIcon className="w-12 h-12 text-gray-300 mx-auto mb-4" />
           <p className="text-gray-500">{t.noHistory}</p>
         </div>
       ) : (
         <div className="space-y-4">
-          {history.map((entry) => (
+          {filtered.map((entry) => (
             <div key={entry.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
               <button
                 onClick={() => toggleExpand(entry.id)}

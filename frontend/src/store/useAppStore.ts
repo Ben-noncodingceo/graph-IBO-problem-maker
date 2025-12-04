@@ -23,6 +23,7 @@ export interface HistoryEntry {
   questions: any[];
   mode?: 'text' | 'image' | 'analysis';
   language?: Language;
+  keywords?: string[];
 }
 
 interface AppState {

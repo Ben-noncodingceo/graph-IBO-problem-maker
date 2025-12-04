@@ -108,7 +108,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, index, req
           <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${difficultyColor}`}>
             {t.difficulty[question.difficulty as keyof typeof t.difficulty] || question.difficulty}
           </span>
-          <span className="text-sm text-gray-500 font-mono">ID: {question.id.split('-').pop()}</span>
+          <span className="text-sm text-gray-500 font-mono">ID: {question.id}</span>
         </div>
 
         <div className="prose max-w-none text-gray-900 mb-6">

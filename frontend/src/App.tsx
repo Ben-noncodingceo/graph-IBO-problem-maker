@@ -92,7 +92,8 @@ function App() {
         paperTitle: paper.title,
         questions: resp.questions,
         mode,
-        language
+        language,
+        keywords
       });
 
       setView('questions');
