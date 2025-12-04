@@ -28,7 +28,8 @@ export const Layout: React.FC<LayoutProps> = ({
       {/* Header */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity" onClick={onGoHome}>
+          <div className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity" onClick={onGoHome}>
+            <span className="text-sm font-semibold text-gray-700">质心教育科技</span>
             <div className="bg-blue-600 p-2 rounded-lg">
               <BookOpen className="w-6 h-6 text-white" />
             </div>
@@ -87,6 +88,7 @@ export const Layout: React.FC<LayoutProps> = ({
           <p className="text-center text-sm text-gray-500">
             {t.footer}
           </p>
+          <p className="text-center text-sm text-gray-700 mt-2">联系作者： <a href="mailto:sunpeng@eduzhixin.com" className="underline">sunpeng@eduzhixin.com</a></p>
         </div>
       </footer>
     </div>
