@@ -3,6 +3,45 @@ import { AIModelType } from './ai/types';
 import { SearchService } from './services/search';
 import { QuestionGenerator } from './services/question';
 
+async function fetchPageHtml(url: string): Promise<string> {
+  const res = await fetch(url, { method: 'GET' });
+  if (!res.ok) return '';
+  const ct = res.headers.get('content-type') || '';
+  if (!ct.includes('text/html')) return '';
+  return await res.text();
+}
+
+function extractOgImage(html: string): string | undefined {
+  const m = html.match(/<meta[^>]*property=["']og:image["'][^>]*content=["']([^"'>]+)["'][^>]*>/i);
+  return m ? m[1] : undefined;
+}
+
+function extractTwitterImage(html: string): string | undefined {
+  const m = html.match(/<meta[^>]*name=["']twitter:image["'][^>]*content=["']([^"'>]+)["'][^>]*>/i);
+  return m ? m[1] : undefined;
+}
+
+function extractFigureImage(html: string): string | undefined {
+  const m = html.match(/<figure[\s\S]*?<img[^>]*src=["']([^"'>]+)["'][^>]*>[\s\S]*?<\/figure>/i);
+  return m ? m[1] : undefined;
+}
+
+function extractFirstImageSrc(html: string): string | undefined {
+  const imgTagMatch = html.match(/<img[^>]*src=["']([^"'>]+)["'][^>]*>/i);
+  if (!imgTagMatch) return undefined;
+  const src = imgTagMatch[1];
+  if (src.startsWith('data:')) return undefined;
+  return src;
+}
+
+function resolveUrl(base: string, src: string): string {
+  try {
+    return new URL(src, base).href;
+  } catch {
+    return src;
+  }
+}
+
 interface Env {
   GEMINI_API_KEY: string;
   OPENAI_API_KEY: string;
@@ -85,10 +124,34 @@ export default {
           (mode === 'image' ? 'image' : 'text'),
           (language === 'en' ? 'en' : 'zh')
         );
+        let finalQuestions = result.questions;
+        let finalMeta = result.meta;
+        if (mode === 'image' && result.meta.modeUsed === 'text') {
+          const searchService = new SearchService(env.SERPAPI_KEY);
+          const alts = await searchService.searchPapers(subject, [paper.title]);
+          let foundUrl: string | undefined;
+          let foundSource: string | undefined;
+          for (const cand of alts.slice(0, 5)) {
+            try {
+              const html = await fetchPageHtml(cand.link);
+              if (!html) continue;
+              const src = extractOgImage(html) || extractTwitterImage(html) || extractFigureImage(html) || extractFirstImageSrc(html);
+              if (src) {
+                foundUrl = resolveUrl(cand.link, src);
+                foundSource = cand.link;
+                break;
+              }
+            } catch {}
+          }
+          if (foundUrl) {
+            finalQuestions = finalQuestions.map(q => ({ ...q, figureUrl: foundUrl, figureSource: foundSource }));
+            finalMeta = { modeUsed: 'image', imageFailReason: undefined };
+          }
+        }
         
         // TODO: Save to DB (Skipped for now to focus on connectivity)
 
-        return new Response(JSON.stringify({ questions: result.questions, meta: result.meta }), { 
+        return new Response(JSON.stringify({ questions: finalQuestions, meta: finalMeta }), { 
           headers: { ...corsHeaders, "Content-Type": "application/json" } 
         });
       }
