@@ -12,8 +12,20 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       
-      # 部署前端到 Pages
-      - name: Build & Deploy Frontend
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      # 1. Build Frontend Manually
+      - name: Install and Build Frontend
+        run: |
+          cd frontend
+          npm install
+          npm run build
+          
+      # 2. Deploy Frontend to Cloudflare Pages (Upload Only)
+      - name: Deploy Frontend to Pages
         uses: cloudflare/pages-action@1
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -21,10 +33,9 @@ jobs:
           projectName: 'graph-ibo-problem-maker'
           directory: 'frontend/dist'
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
-          workingDirectory: 'frontend'
-          command: npm install && npm run build
+          # No command needed here, we built it above
           
-      # 部署后端到 Workers
+      # 3. Deploy Backend to Cloudflare Workers
       - name: Deploy Backend Worker
         uses: cloudflare/wrangler-action@v3
         with:
