@@ -3,10 +3,10 @@ main = "src/index.ts"
 compatibility_date = "2024-07-01"
 
 # D1 Database Binding
-# [[d1_databases]]
-# binding = "DB"
-# database_name = "bio-db"
-# database_id = "INSERT-DATABASE-ID-HERE""695f55ec-a5c5-4c5e-8e4e-72bdb40e1160"
+[[d1_databases]]
+binding = "DB"
+database_name = "bio-db-prod"
+database_id = "c9996dd7-4ae7-4b30-882f-e905517288fc"
 
 # R2 Bucket Binding
 [[r2_buckets]]
