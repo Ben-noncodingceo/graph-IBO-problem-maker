@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useAppStore } from '../store/useAppStore'
 import { QuestionCard } from './QuestionCard'
 import { api, Question } from '../services/api'
@@ -20,6 +20,9 @@ export const PKMode: React.FC<PKModeProps> = ({ onClose }) => {
   })
   const allQuestions: Question[] = useMemo(() => history.flatMap(h => h.questions), [history])
   const [pair, setPair] = useState<{ left: Question; right: Question } | null>(null)
+  const [counts, setCounts] = useState<Record<string, { good: number; hard: number }>>({})
+  const [loading, setLoading] = useState<boolean>(false)
+  const [flash, setFlash] = useState<{ key: string; kind: 'good'|'hard' } | null>(null)
 
   const stopwords = new Set(['the','and','for','with','from','into','this','that','have','has','are','was','were','will','shall','of','in','on','at','to','by','or','an','a','as'])
   const popular = useMemo(() => {
@@ -41,6 +44,15 @@ export const PKMode: React.FC<PKModeProps> = ({ onClose }) => {
       const resp = await api.pkStart(allQuestions, mode, keyword)
       setPair(resp)
       addLog({ type: 'info', message: 'PK started', details: { mode, keyword, ids: [resp.left.id, resp.right.id] } })
+      // preload counts
+      const goodHist = await api.pkHistory('good')
+      const hardHist = await api.pkHistory('hard')
+      const map: Record<string, { good: number; hard: number }> = {}
+      const ids = [resp.left.id, resp.right.id]
+      ids.forEach(id => { map[id] = { good: 0, hard: 0 } })
+      goodHist.items.forEach(it => { if (map[it.qid]) map[it.qid].good = it.count })
+      hardHist.items.forEach(it => { if (map[it.qid]) map[it.qid].hard = it.count })
+      setCounts(map)
     } catch (e) {
       addLog({ type: 'error', message: 'PK start failed', details: e })
       alert('PK 初始化失败')
@@ -51,7 +63,20 @@ export const PKMode: React.FC<PKModeProps> = ({ onClose }) => {
     if (!pair) return
     const qidLeft = pair.left.id
     const qidRight = pair.right.id
+    setLoading(true)
     await api.pkRate({ userId, qidLeft: side==='left'?qidLeft:qidRight, qidRight: side==='left'?qidRight:qidLeft, ratingType: kind, value })
+    // optimistic local update
+    const winner = (kind==='goodbad') ? (value==='good' ? (side==='left'?qidLeft:qidRight) : (side==='left'?qidRight:qidLeft)) : undefined
+    const harder = (kind==='hardeasy') ? (value==='hard' ? (side==='left'?qidLeft:qidRight) : (side==='left'?qidRight:qidLeft)) : undefined
+    setCounts(prev => {
+      const next = { ...prev }
+      if (winner) next[winner] = { ...(next[winner] || { good: 0, hard: 0 }), good: (next[winner]?.good || 0) + 1 }
+      if (harder) next[harder] = { ...(next[harder] || { good: 0, hard: 0 }), hard: (next[harder]?.hard || 0) + 1 }
+      return next
+    })
+    setFlash({ key: winner || harder || '', kind: winner ? 'good' : 'hard' })
+    setTimeout(()=>setFlash(null), 600)
+    setLoading(false)
   }
 
   return (
@@ -90,16 +115,18 @@ export const PKMode: React.FC<PKModeProps> = ({ onClose }) => {
           <div className="space-y-3">
             <QuestionCard question={pair.left} index={1} requestedMode={'text'} />
             <div className="flex items-center gap-2">
-              <button onClick={()=>{rate('left','goodbad','good'); rate('right','goodbad','bad')}} className="px-3 py-1.5 rounded bg-green-600 text-white flex items-center gap-1"><ThumbsUp className="w-4 h-4"/>Good</button>
-              <button onClick={()=>{rate('left','hardeasy','hard'); rate('right','hardeasy','easy')}} className="px-3 py-1.5 rounded bg-orange-600 text-white flex items-center gap-1"><Gauge className="w-4 h-4"/>Hard</button>
+              <button disabled={loading} onClick={()=>{rate('left','goodbad','good'); rate('right','goodbad','bad')}} className={`px-3 py-1.5 rounded bg-green-600 text-white flex items-center gap-1 transition transform ${flash?.key===pair.left.id && flash.kind==='good' ? 'scale-105 ring-2 ring-green-300' : ''}`}><ThumbsUp className="w-4 h-4"/>Good</button>
+              <button disabled={loading} onClick={()=>{rate('left','hardeasy','hard'); rate('right','hardeasy','easy')}} className={`px-3 py-1.5 rounded bg-orange-600 text-white flex items-center gap-1 transition transform ${flash?.key===pair.left.id && flash.kind==='hard' ? 'scale-105 ring-2 ring-orange-300' : ''}`}><Gauge className="w-4 h-4"/>Hard</button>
             </div>
+            <div className="text-xs text-gray-600">Good: {counts[pair.left.id]?.good || 0} · Hard: {counts[pair.left.id]?.hard || 0}</div>
           </div>
           <div className="space-y-3">
             <QuestionCard question={pair.right} index={2} requestedMode={'text'} />
             <div className="flex items-center gap-2">
-              <button onClick={()=>{rate('right','goodbad','good'); rate('left','goodbad','bad')}} className="px-3 py-1.5 rounded bg-green-600 text-white flex items-center gap-1"><ThumbsUp className="w-4 h-4"/>Good</button>
-              <button onClick={()=>{rate('right','hardeasy','hard'); rate('left','hardeasy','easy')}} className="px-3 py-1.5 rounded bg-orange-600 text-white flex items-center gap-1"><Gauge className="w-4 h-4"/>Hard</button>
+              <button disabled={loading} onClick={()=>{rate('right','goodbad','good'); rate('left','goodbad','bad')}} className={`px-3 py-1.5 rounded bg-green-600 text-white flex items-center gap-1 transition transform ${flash?.key===pair.right.id && flash.kind==='good' ? 'scale-105 ring-2 ring-green-300' : ''}`}><ThumbsUp className="w-4 h-4"/>Good</button>
+              <button disabled={loading} onClick={()=>{rate('right','hardeasy','hard'); rate('left','hardeasy','easy')}} className={`px-3 py-1.5 rounded bg-orange-600 text-white flex items-center gap-1 transition transform ${flash?.key===pair.right.id && flash.kind==='hard' ? 'scale-105 ring-2 ring-orange-300' : ''}`}><Gauge className="w-4 h-4"/>Hard</button>
             </div>
+            <div className="text-xs text-gray-600">Good: {counts[pair.right.id]?.good || 0} · Hard: {counts[pair.right.id]?.hard || 0}</div>
           </div>
         </div>
       )}
