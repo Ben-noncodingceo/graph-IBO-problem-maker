@@ -47,17 +47,17 @@ function App() {
     await handleSearch();
   };
 
-  const handleGenerate = async (paper: Paper) => {
+  const handleGenerate = async (paper: Paper, mode: 'text' | 'image') => {
     if (!selectedSubject) return;
     
     const currentKey = apiKeys[selectedModel] || '';
-    addLog({ type: 'info', message: `Generating questions using ${selectedModel}`, details: { paper: paper.title } });
+    addLog({ type: 'info', message: `Generating questions using ${selectedModel} (Mode: ${mode})`, details: { paper: paper.title } });
 
     setSelectedPaper(paper);
     setLoading('Generating Questions... This may take 30s+');
     
     try {
-      const generated = await api.generateQuestions(paper, selectedSubject, selectedModel, currentKey);
+      const generated = await api.generateQuestions(paper, selectedSubject, selectedModel, currentKey, mode);
       addLog({ type: 'api', message: `Generate API Success`, details: generated });
       
       setQuestions(generated);

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAppStore, useTranslation } from '../store/useAppStore';
 import { QuestionCard } from './QuestionCard';
-import { Calendar, ChevronDown, ChevronRight, FileText } from 'lucide-react';
+import { Calendar, ChevronDown, ChevronRight } from 'lucide-react';
 
 export const HistoryPage: React.FC = () => {
   const { history } = useAppStore();
