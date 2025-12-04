@@ -78,17 +78,17 @@ function App() {
     setLoading(true); // Start loading animation
     
     try {
-      const generated = await api.generateQuestions(paper, selectedSubject, selectedModel, currentKey, mode, language);
-      addLog({ type: 'api', message: `Generate API Success`, details: generated });
+      const resp = await api.generateQuestions(paper, selectedSubject, selectedModel, currentKey, mode, language);
+      addLog({ type: 'api', message: `Generate API Success`, details: resp });
       
-      setQuestions(generated);
+      setQuestions(resp.questions);
       setLastLanguageUsed(language);
       
       // Save to History
       addToHistory({
         subject: selectedSubject,
         paperTitle: paper.title,
-        questions: generated,
+        questions: resp.questions,
         mode,
         language
       });
@@ -112,8 +112,8 @@ function App() {
       setLoading(true);
       addLog({ type: 'info', message: `Language changed: regenerating questions (${language})` });
       try {
-        const generated = await api.generateQuestions(selectedPaper, selectedSubject as string, selectedModel, currentKey, currentMode, language);
-        setQuestions(generated);
+        const resp = await api.generateQuestions(selectedPaper, selectedSubject as string, selectedModel, currentKey, currentMode, language);
+        setQuestions(resp.questions);
         setLastLanguageUsed(language);
       } catch (err) {
         addLog({ type: 'error', message: 'Regenerate on language change failed', details: err });

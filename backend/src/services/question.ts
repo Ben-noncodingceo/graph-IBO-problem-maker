@@ -16,21 +16,12 @@ export interface Question {
 export class QuestionGenerator {
   constructor(private aiClient: AIClient) {}
 
-  async generateFromPaper(paper: Paper, subject: string, mode: 'text' | 'image' = 'text', language: 'zh' | 'en' = 'zh'): Promise<Question[]> {
-    const isImageMode = mode === 'image';
+  async generateFromPaper(paper: Paper, subject: string, mode: 'text' | 'image' = 'text', language: 'zh' | 'en' = 'zh'): Promise<{ questions: Question[]; meta: { modeUsed: 'text' | 'image'; imageFailReason?: string } }> {
+    const isImageModeRequested = mode === 'image';
     
-    const modeInstruction = isImageMode 
-      ? `
-        MODE: IMAGE/CHART
-        1. Simulate a key scientific figure (Figure 1) relevant to this paper (e.g., a bar graph of gene expression, a survival curve, or a signaling pathway diagram).
-        2. Provide a "context" field: A concise description (50-150 words) of what Figure 1 represents, including axes labels or key legend info necessary to interpret it.
-        3. The questions MUST require analyzing this described figure logic.
-        `
-      : `
-        MODE: TEXT ONLY
-        1. Provide a "context" field: A detailed summary (50-300 words) of the paper's key findings, methodology, or theoretical background.
-        2. This text MUST provide enough information for a student to deduce the correct answers without prior specific knowledge of this exact paper.
-        `;
+    let extractedFigureUrl: string | undefined;
+    let figureSource: string | undefined;
+    let extractionReason: string | undefined;
 
     const prompt = `
       Role: You are an expert Biology Olympiad (IBO) question setter.
@@ -39,11 +30,20 @@ export class QuestionGenerator {
       Paper Title: ${paper.title}
       Paper Snippet: ${paper.snippet}
       Subject: ${subject}
-      Generation Mode: ${mode}
+      Generation Mode: ${isImageModeRequested && extractedFigureUrl ? 'image' : 'text'}
       Output Language: ${language === 'zh' ? 'Chinese (Simplified)' : 'English'}
       
       Specific Instructions:
-      ${modeInstruction}
+      ${extractedFigureUrl ? `
+        MODE: EXISTING FIGURE FROM PAPER
+        1. Use the existing figure from the selected paper; do not invent or simulate new figures.
+        2. Provide a "context" field: A concise description (50-150 words) of what the displayed figure represents, aligned with axes labels or legend info.
+        3. Ensure all questions require analyzing this described figure.
+      ` : `
+        MODE: TEXT ONLY
+        1. Provide a "context" field: A detailed summary (50-300 words) of the paper's key findings, methodology, or theoretical background.
+        2. This text MUST provide enough information for a student to deduce the correct answers without prior specific knowledge of this exact paper.
+      `}
       
       General Requirements:
       1. Generate 3 questions with increasing difficulty: Easy, Medium, Hard.
@@ -66,22 +66,27 @@ export class QuestionGenerator {
     `;
 
     try {
-      // Attempt to extract existing figures from the paper page when image mode is selected
-      let extractedFigureUrl: string | undefined;
-      let figureSource: string | undefined;
-      if (isImageMode && paper.link) {
+      if (isImageModeRequested && paper.link) {
         try {
           const html = await this.fetchPageHtml(paper.link);
-          let src = this.extractOgImage(html)
-            || this.extractTwitterImage(html)
-            || this.extractFigureImage(html)
-            || this.extractFirstImageSrc(html);
-          if (src) {
-            const resolved = this.resolveUrl(paper.link, src);
-            extractedFigureUrl = resolved;
-            figureSource = paper.link;
+          if (!html) {
+            extractionReason = 'non-html content';
+          } else {
+            let src = this.extractOgImage(html)
+              || this.extractTwitterImage(html)
+              || this.extractFigureImage(html)
+              || this.extractFirstImageSrc(html);
+            if (src) {
+              const resolved = this.resolveUrl(paper.link, src);
+              extractedFigureUrl = resolved;
+              figureSource = paper.link;
+            } else {
+              extractionReason = 'no image tag found';
+            }
           }
-        } catch (e) {}
+        } catch (e: any) {
+          extractionReason = 'fetch error: ' + (e?.message || 'unknown');
+        }
       }
 
       const rawResponse = await this.aiClient.chat([
@@ -102,13 +107,20 @@ export class QuestionGenerator {
       const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
       const randomBase = Math.floor(1000 + Math.random() * 9000);
 
-      return questions.map((q, idx) => ({
+      const finalQuestions = questions.map((q, idx) => ({
         ...q,
         id: `T-${dateStr}-${randomBase + idx}`,
         type: 'Multiple Choice',
-        figureUrl: isImageMode ? extractedFigureUrl : undefined,
-        figureSource: isImageMode ? figureSource : undefined
+        figureUrl: extractedFigureUrl,
+        figureSource: figureSource
       }));
+
+      const meta = {
+        modeUsed: extractedFigureUrl ? 'image' as const : 'text' as const,
+        imageFailReason: extractedFigureUrl ? undefined : extractionReason
+      };
+
+      return { questions: finalQuestions, meta };
 
     } catch (error) {
       console.error("Failed to generate questions:", error);

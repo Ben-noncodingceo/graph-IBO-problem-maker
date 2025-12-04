@@ -79,7 +79,7 @@ export default {
         
         // Generate Questions
         const generator = new QuestionGenerator(aiClient);
-        const questions = await generator.generateFromPaper(
+        const result = await generator.generateFromPaper(
           paper,
           subject,
           (mode === 'image' ? 'image' : 'text'),
@@ -88,7 +88,7 @@ export default {
         
         // TODO: Save to DB (Skipped for now to focus on connectivity)
 
-        return new Response(JSON.stringify({ questions }), { 
+        return new Response(JSON.stringify({ questions: result.questions, meta: result.meta }), { 
           headers: { ...corsHeaders, "Content-Type": "application/json" } 
         });
       }

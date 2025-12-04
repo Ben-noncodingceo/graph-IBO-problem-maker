@@ -41,7 +41,7 @@ export const api = {
     apiKey: string,
     mode: 'text' | 'image',
     language: Language
-  ): Promise<Question[]> => {
+  ): Promise<{ questions: Question[]; meta?: any }> => {
     const res = await axios.post(
       `${API_BASE}/generate_questions`, 
       { paper, subject, mode, language },
@@ -52,7 +52,7 @@ export const api = {
         }
       }
     );
-    return res.data.questions;
+    return res.data;
   }
 };
 
