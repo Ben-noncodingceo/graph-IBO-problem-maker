@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react'
 import { useAppStore, useTranslation } from '../store/useAppStore'
 import { QuestionCard } from './QuestionCard'
 import { api, Question } from '../services/api'
-import { Shuffle, Search, ThumbsUp, ThumbsDown, Gauge } from 'lucide-react'
+import { Shuffle, Search, ThumbsUp, Gauge } from 'lucide-react'
 
 interface PKModeProps {
   onClose: () => void
