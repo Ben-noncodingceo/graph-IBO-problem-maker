@@ -39,13 +39,8 @@ function App() {
   const handleGenerate = async (paper: Paper) => {
     if (!selectedSubject) return;
     
-    // Check if API Key is set for selected model
-    const currentKey = apiKeys[selectedModel];
-    if (!currentKey) {
-      alert(`Please set the API Key for ${selectedModel} in Settings first.`);
-      setIsSettingsOpen(true);
-      return;
-    }
+    // Get API Key if provided by user, otherwise use empty string (Backend will use Secret)
+    const currentKey = apiKeys[selectedModel] || '';
 
     setSelectedPaper(paper);
     setLoading('Generating Questions... This may take 30s+');

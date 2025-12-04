@@ -21,10 +21,6 @@ jobs:
         with:
           node-version: '20'
 
-      # Debug Step: Verify File Structure
-      - name: Debug File Structure
-        run: ls -R backend
-
       # 1. Build Frontend Manually
       - name: Install and Build Frontend
         run: |
@@ -42,12 +38,11 @@ jobs:
           directory: 'frontend/dist'
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
           
-      # 3. Deploy Backend to Cloudflare Workers (Manual Shell Command)
+      # 3. Deploy Backend to Cloudflare Workers
       - name: Deploy Backend Worker
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: |
-          cd backend
-          npm install
-          npx wrangler deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: 'backend'
+          wranglerVersion: '4.52.1'

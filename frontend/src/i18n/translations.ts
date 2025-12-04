@@ -21,9 +21,9 @@ export const TRANSLATIONS = {
     settingsTitle: 'AI Configuration',
     selectModel: 'Select Active Model',
     apiKeys: 'API Keys Configuration',
-    apiKeyPlaceholder: 'Enter API Key...',
+    apiKeyPlaceholder: 'Enter API Key (Optional if Secrets configured)',
     saveClose: 'Save & Close',
-    apiKeyNote: 'Your API keys are stored locally in your browser and sent directly to the Cloudflare Worker. They are never saved on our servers.',
+    apiKeyNote: 'Optional: If you leave this blank, the system will use the default API keys configured in the backend Secrets.',
     
     footer: 'Powered by Cloudflare Workers & Multi-Modal AI',
     
@@ -55,9 +55,9 @@ export const TRANSLATIONS = {
     settingsTitle: 'AI 配置',
     selectModel: '选择 AI 模型',
     apiKeys: 'API Key 配置',
-    apiKeyPlaceholder: '输入 API Key...',
+    apiKeyPlaceholder: '输入 API Key (若后台已配置可留空)',
     saveClose: '保存并关闭',
-    apiKeyNote: '您的 API Key 仅存储在本地浏览器中，并直接发送至 Cloudflare Worker，绝不会保存到我们的服务器上。',
+    apiKeyNote: '可选：如果您留空，系统将自动使用后端 Secret 中配置的默认 API Key。',
     
     footer: '基于 Cloudflare Workers & 多模态 AI 构建',
     
