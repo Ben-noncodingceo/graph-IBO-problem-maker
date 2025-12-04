@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware';
 import { TRANSLATIONS, Language } from '../i18n/translations';
 import { IBO_SUBJECTS, IboSubject } from '../data/iboData';
 
-export type AIModel = 'gemini' | 'openai' | 'deepseek' | 'doubao' | 'tongyi';
+export type AIModel = 'gemini' | 'openai' | 'deepseek' | 'deepseek_v3_2' | 'doubao' | 'tongyi';
 
 export { IBO_SUBJECTS, type IboSubject };
 
@@ -21,6 +21,8 @@ export interface HistoryEntry {
   subject: string;
   paperTitle: string;
   questions: any[];
+  mode?: 'text' | 'image';
+  language?: Language;
 }
 
 interface AppState {
@@ -55,11 +57,12 @@ export const useAppStore = create<AppState>()(
   persist(
     (set) => ({
       language: 'zh', // Default to Chinese
-      selectedModel: 'gemini',
+      selectedModel: 'deepseek_v3_2',
       apiKeys: {
         gemini: '',
         openai: '',
         deepseek: '',
+        deepseek_v3_2: '',
         doubao: '',
         tongyi: '',
       },

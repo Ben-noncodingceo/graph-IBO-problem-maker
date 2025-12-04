@@ -58,7 +58,7 @@ export const HistoryPage: React.FC = () => {
               {expandedId === entry.id && (
                 <div className="border-t border-gray-100 p-4 bg-gray-50 space-y-6">
                   {entry.questions.map((q: any, idx: number) => (
-                    <QuestionCard key={idx} question={q} index={idx} />
+                    <QuestionCard key={idx} question={q} index={idx} requestedMode={entry.mode || 'text'} />
                   ))}
                 </div>
               )}

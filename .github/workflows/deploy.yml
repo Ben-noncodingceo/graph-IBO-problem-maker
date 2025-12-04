@@ -46,3 +46,10 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: 'backend'
           wranglerVersion: '4.52.1'
+
+      - name: Smoke Test DeepSeek V3.2 Speciale
+        run: |
+          npm init -y >/dev/null 2>&1 || true
+          npm install node-fetch@3 >/dev/null 2>&1
+          node scripts/smoke-deepseek-v3_2.mjs
+        continue-on-error: true

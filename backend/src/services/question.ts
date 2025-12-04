@@ -16,7 +16,7 @@ export interface Question {
 export class QuestionGenerator {
   constructor(private aiClient: AIClient) {}
 
-  async generateFromPaper(paper: Paper, subject: string, mode: 'text' | 'image' = 'text'): Promise<Question[]> {
+  async generateFromPaper(paper: Paper, subject: string, mode: 'text' | 'image' = 'text', language: 'zh' | 'en' = 'zh'): Promise<Question[]> {
     const isImageMode = mode === 'image';
     
     const modeInstruction = isImageMode 
@@ -40,6 +40,7 @@ export class QuestionGenerator {
       Paper Snippet: ${paper.snippet}
       Subject: ${subject}
       Generation Mode: ${mode}
+      Output Language: ${language === 'zh' ? 'Chinese (Simplified)' : 'English'}
       
       Specific Instructions:
       ${modeInstruction}
@@ -65,6 +66,23 @@ export class QuestionGenerator {
     `;
 
     try {
+      // Attempt to extract existing figures from the paper page when image mode is selected
+      let extractedFigureUrl: string | undefined;
+      let figureSource: string | undefined;
+      if (isImageMode && paper.link) {
+        try {
+          const html = await this.fetchPageHtml(paper.link);
+          const src = this.extractFirstImageSrc(html);
+          if (src) {
+            const resolved = this.resolveUrl(paper.link, src);
+            extractedFigureUrl = resolved;
+            figureSource = paper.link;
+          }
+        } catch (e) {
+          // Ignore extraction errors, fallback to AI-only context
+        }
+      }
+
       const rawResponse = await this.aiClient.chat([
         { role: 'user', content: prompt }
       ]);
@@ -83,25 +101,41 @@ export class QuestionGenerator {
       const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
       const randomBase = Math.floor(1000 + Math.random() * 9000);
 
-      // Mock Image URLs for demonstration since we can't really screenshot via LLM text
-      const mockChartUrls = [
-        "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80", // Data chart
-        "https://images.unsplash.com/photo-1530026405186-ed1f139313f8?auto=format&fit=crop&w=800&q=80", // DNA structure
-        "https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?auto=format&fit=crop&w=800&q=80", // Molecule
-        "https://plus.unsplash.com/premium_photo-1676325102583-0839e57d7a1f?auto=format&fit=crop&w=800&q=80" // Micro
-      ];
-
       return questions.map((q, idx) => ({
         ...q,
         id: `T-${dateStr}-${randomBase + idx}`,
         type: 'Multiple Choice',
-        // If image mode, inject a random scientific image to simulate the "extracted figure"
-        figureUrl: isImageMode ? mockChartUrls[idx % mockChartUrls.length] : undefined
+        figureUrl: isImageMode ? extractedFigureUrl : undefined,
+        figureSource: isImageMode ? figureSource : undefined
       }));
 
     } catch (error) {
       console.error("Failed to generate questions:", error);
       throw new Error("AI Generation Failed: " + (error as Error).message);
+    }
+  }
+
+  private async fetchPageHtml(url: string): Promise<string> {
+    const res = await fetch(url, { method: 'GET' });
+    if (!res.ok) throw new Error(`Failed to fetch page: ${res.status}`);
+    return await res.text();
+  }
+
+  private extractFirstImageSrc(html: string): string | undefined {
+    // Basic extraction of first <img ... src="..."> occurrence
+    const imgTagMatch = html.match(/<img[^>]*src=["']([^"'>]+)["'][^>]*>/i);
+    if (!imgTagMatch) return undefined;
+    const src = imgTagMatch[1];
+    // Skip data URIs and sprites
+    if (src.startsWith('data:')) return undefined;
+    return src;
+  }
+
+  private resolveUrl(base: string, src: string): string {
+    try {
+      return new URL(src, base).href;
+    } catch {
+      return src;
     }
   }
 }

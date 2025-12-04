@@ -42,13 +42,12 @@ class OpenAICompatibleClient implements AIClient {
 
 // --- Gemini Client ---
 class GeminiClient implements AIClient {
-  constructor(private apiKey: string) {}
+  constructor(private apiKey: string, private modelName: string = 'gemini-3-pro-preview') {}
 
   async chat(messages: AIChatMessage[]): Promise<string> {
-    // Use user specified model: gemini-3-pro-preview
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:generateContent?key=${this.apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${this.modelName}:generateContent?key=${this.apiKey}`;
     
-    console.log(`[AI] Calling Gemini API (gemini-3-pro-preview)`);
+    console.log(`[AI] Calling Gemini API (${this.modelName})`);
 
     // Convert standard messages to Gemini format
     const contents = messages.map(msg => ({
@@ -94,8 +93,17 @@ export class AIFactory {
           modelName: 'deepseek-chat'
         }, 'deepseek-chat');
 
+      case 'deepseek_v3_2':
+        return new OpenAICompatibleClient({
+          apiKey,
+          baseURL: 'https://api.deepseek.com/v3.2_speciale_expires_on_20251215',
+          modelName: 'deepseek-v3.2'
+        }, 'deepseek-v3.2');
+
       case 'gemini':
-        return new GeminiClient(apiKey);
+        return new GeminiClient(apiKey, 'gemini-3-pro-preview');
+      case 'gemini_image':
+        return new GeminiClient(apiKey, 'gemini-3-pro-image-preview');
         
       case 'doubao':
          // Assuming Doubao via ARK compatible API if key is provided

@@ -47,7 +47,7 @@ export default {
       // --- Route 2: Generate Questions ---
       if (url.pathname === '/api/generate_questions' && request.method === 'POST') {
         const body = await request.json() as any;
-        const { paper, subject } = body;
+        const { paper, subject, mode, language } = body;
         
         // Extract Model Config from Headers or Body
         // Headers are safer/standard, but body is easy too. Let's look at headers.
@@ -58,8 +58,10 @@ export default {
         if (!apiKey) {
           switch (modelType) {
             case 'gemini': apiKey = env.GEMINI_API_KEY; break;
+            case 'gemini_image': apiKey = env.GEMINI_API_KEY; break;
             case 'openai': apiKey = env.OPENAI_API_KEY; break;
             case 'deepseek': apiKey = env.DEEPSEEK_API_KEY; break;
+            case 'deepseek_v3_2': apiKey = env.DEEPSEEK_API_KEY; break;
             case 'doubao': apiKey = env.DOUBAO_API_KEY; break;
             case 'tongyi': apiKey = env.TONGYI_API_KEY; break;
           }
@@ -77,7 +79,12 @@ export default {
         
         // Generate Questions
         const generator = new QuestionGenerator(aiClient);
-        const questions = await generator.generateFromPaper(paper, subject);
+        const questions = await generator.generateFromPaper(
+          paper,
+          subject,
+          (mode === 'image' ? 'image' : 'text'),
+          (language === 'en' ? 'en' : 'zh')
+        );
         
         // TODO: Save to DB (Skipped for now to focus on connectivity)
 

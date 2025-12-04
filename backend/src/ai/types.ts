@@ -7,4 +7,4 @@ export interface AIClient {
   chat(messages: AIChatMessage[]): Promise<string>;
 }
 
-export type AIModelType = 'gemini' | 'openai' | 'deepseek' | 'doubao' | 'tongyi';
+export type AIModelType = 'gemini' | 'gemini_image' | 'openai' | 'deepseek' | 'doubao' | 'tongyi';

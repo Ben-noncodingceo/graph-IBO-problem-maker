@@ -35,6 +35,16 @@ export const TRANSLATIONS = {
     noHistory: 'No questions generated yet. Start exploring papers!',
     textMode: 'Text Only',
     imageMode: 'With Figure',
+    contextTitle: 'Question Material / Context',
+    figureCaption: 'Figure from paper (if available)',
+    figureSourceLabel: 'Figure source',
+    imageAlt: 'Scientific Figure',
+    showAnswer: 'Show Answer & Analysis',
+    hideAnswer: 'Hide Answer & Analysis',
+    analysisTitle: 'Analysis & Scientific Reasoning',
+    correctAnswerLabel: 'Correct Answer:',
+    imageFallbackMessage: 'Figure extraction failed; switched to text-only question.',
+    difficulty: { Easy: 'Easy', Medium: 'Medium', Hard: 'Hard' },
     
     loadingMessages: [
       "AI is thinking...", 
@@ -51,6 +61,7 @@ export const TRANSLATIONS = {
       gemini: { name: 'Google Gemini (gemini-3-pro-preview)', desc: 'Best overall performance & speed' },
       gpt4: { name: 'OpenAI GPT-4', desc: 'High reasoning capability' },
       deepseek: { name: 'DeepSeek', desc: 'Cost-effective & strong logic' },
+      deepseek_v3_2: { name: 'DeepSeek V3.2 Speciale', desc: 'Reasoning chat only, up to 128K output' },
       doubao: { name: 'Doubao (豆包)', desc: 'Optimized for Chinese context' },
       tongyi: { name: 'Tongyi Qianwen', desc: 'Alibaba Cloud Qwen Model' },
     }
@@ -89,6 +100,16 @@ export const TRANSLATIONS = {
     noHistory: '暂无生成记录。快去探索文献吧！',
     textMode: '纯文字题',
     imageMode: '图表题',
+    contextTitle: '题目材料 / Context',
+    figureCaption: '来自文献的图表（若可用）',
+    figureSourceLabel: '图片来源',
+    imageAlt: '科学图像',
+    showAnswer: '展开答案与解析',
+    hideAnswer: '收起答案与解析',
+    analysisTitle: '解析与科学推理',
+    correctAnswerLabel: '正确答案：',
+    imageFallbackMessage: '图像提取失败，已切换为文字题。',
+    difficulty: { Easy: '简单', Medium: '中等', Hard: '困难' },
     
     loadingMessages: [
       "AI 正在思考", 
@@ -105,6 +126,7 @@ export const TRANSLATIONS = {
       gemini: { name: 'Google Gemini (gemini-3-pro-preview)', desc: '综合性能与速度最佳' },
       gpt4: { name: 'OpenAI GPT-4', desc: '强大的推理能力' },
       deepseek: { name: 'DeepSeek', desc: '高性价比与强逻辑' },
+      deepseek_v3_2: { name: 'DeepSeek V3.2 Speciale', desc: '仅对话思考模式，输出最长 128K' },
       doubao: { name: '豆包 (Doubao)', desc: '中文语境优化' },
       tongyi: { name: '通义千问', desc: '阿里云 Qwen 模型' },
     }

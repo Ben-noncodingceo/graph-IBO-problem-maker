@@ -19,10 +19,11 @@ function App() {
   const [view, setView] = useState<'home' | 'results' | 'questions' | 'history' | 'debug'>('home');
   const [papers, setPapers] = useState<Paper[]>([]);
   const [questions, setQuestions] = useState<Question[]>([]);
+  const [currentMode, setCurrentMode] = useState<'text' | 'image'>('text');
   const [selectedPaper, setSelectedPaper] = useState<Paper | null>(null);
 
   const { selectedSubject, keywords, selectedModel, apiKeys, addLog, addToHistory } = useAppStore();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
 
   // Loading Message Rotation Logic
   useEffect(() => {
@@ -70,10 +71,11 @@ function App() {
     addLog({ type: 'info', message: `Generating questions using ${selectedModel} (Mode: ${mode})`, details: { paper: paper.title } });
 
     setSelectedPaper(paper);
+    setCurrentMode(mode);
     setLoading(true); // Start loading animation
     
     try {
-      const generated = await api.generateQuestions(paper, selectedSubject, selectedModel, currentKey, mode);
+      const generated = await api.generateQuestions(paper, selectedSubject, selectedModel, currentKey, mode, language);
       addLog({ type: 'api', message: `Generate API Success`, details: generated });
       
       setQuestions(generated);
@@ -82,7 +84,9 @@ function App() {
       addToHistory({
         subject: selectedSubject,
         paperTitle: paper.title,
-        questions: generated
+        questions: generated,
+        mode,
+        language
       });
 
       setView('questions');
@@ -229,7 +233,7 @@ function App() {
 
             <div className="space-y-8">
               {questions.map((q, idx) => (
-                <QuestionCard key={idx} question={q} index={idx} />
+                <QuestionCard key={idx} question={q} index={idx} requestedMode={currentMode} />
               ))}
             </div>
           </div>

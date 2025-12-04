@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { AIModel } from '../store/useAppStore';
+import { Language } from '../i18n/translations';
 
 // Determine API Base URL based on environment
 const API_BASE = import.meta.env.DEV 
@@ -20,6 +21,7 @@ export interface Question {
   difficulty: string;
   context?: string; // New: Context text or figure description
   figureUrl?: string; // New: Image URL
+  figureSource?: string; // New: Source page URL when image is extracted
   scenario: string;
   options: string[];
   correctAnswer: string;
@@ -37,11 +39,12 @@ export const api = {
     subject: string, 
     model: AIModel, 
     apiKey: string,
-    mode: 'text' | 'image' // New param
+    mode: 'text' | 'image',
+    language: Language
   ): Promise<Question[]> => {
     const res = await axios.post(
       `${API_BASE}/generate_questions`, 
-      { paper, subject, mode },
+      { paper, subject, mode, language },
       {
         headers: {
           'x-model-type': model,

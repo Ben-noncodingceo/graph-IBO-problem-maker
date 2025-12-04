@@ -1,14 +1,17 @@
 import React, { useState } from 'react';
 import { Question } from '../services/api';
-import { ChevronUp, CheckCircle, HelpCircle, FileText, Image as ImageIcon } from 'lucide-react';
+import { ChevronUp, CheckCircle, HelpCircle, FileText, Image as ImageIcon, AlertTriangle } from 'lucide-react';
+import { useTranslation } from '../store/useAppStore';
 
 interface QuestionCardProps {
   question: Question;
   index: number;
+  requestedMode?: 'text' | 'image';
 }
 
-export const QuestionCard: React.FC<QuestionCardProps> = ({ question, index }) => {
+export const QuestionCard: React.FC<QuestionCardProps> = ({ question, index, requestedMode = 'text' }) => {
   const [showAnswer, setShowAnswer] = useState(false);
+  const { t } = useTranslation();
 
   const difficultyColor = {
     'Easy': 'bg-green-100 text-green-800',
@@ -19,23 +22,36 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, index }) =
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
       {/* Context / Material Section */}
-      {(question.context || question.figureUrl) && (
+      {(question.context || question.figureUrl || (requestedMode === 'image')) && (
         <div className="bg-slate-50 border-b border-gray-200 p-6">
           <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-2">
             {question.figureUrl ? <ImageIcon className="w-4 h-4" /> : <FileText className="w-4 h-4" />}
-            Question Material / Context
+            {t.contextTitle}
           </h4>
           
           {question.figureUrl && (
             <div className="mb-4">
               <img 
                 src={question.figureUrl} 
-                alt="Scientific Figure" 
+                alt={t.imageAlt} 
                 className="rounded-lg border border-gray-200 max-h-64 object-contain bg-white mx-auto"
               />
               <p className="text-center text-xs text-gray-500 mt-2 italic">
-                * Simulated Figure for IBO Training *
+                {t.figureCaption}
+                {question.figureSource ? (
+                  <>
+                    {' · '}
+                    {t.figureSourceLabel}: <a href={question.figureSource} target="_blank" rel="noreferrer" className="underline">{question.figureSource}</a>
+                  </>
+                ) : null}
               </p>
+            </div>
+          )}
+
+          {!question.figureUrl && requestedMode === 'image' && (
+            <div className="mb-4 flex items-center gap-2 text-amber-700 bg-amber-50 border border-amber-200 rounded-md p-3">
+              <AlertTriangle className="w-4 h-4" />
+              <span className="text-xs">{t.imageFallbackMessage}</span>
             </div>
           )}
           
@@ -50,7 +66,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, index }) =
       <div className="p-6">
         <div className="flex justify-between items-start mb-4">
           <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${difficultyColor}`}>
-            {question.difficulty}
+            {t.difficulty[question.difficulty as keyof typeof t.difficulty] || question.difficulty}
           </span>
           <span className="text-sm text-gray-500 font-mono">ID: {question.id.split('-').pop()}</span>
         </div>
@@ -98,12 +114,12 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, index }) =
           {showAnswer ? (
             <>
               <ChevronUp className="w-4 h-4" />
-              Hide Answer & Analysis
+              {t.hideAnswer}
             </>
           ) : (
             <>
               <HelpCircle className="w-4 h-4" />
-              Show Answer & Analysis
+              {t.showAnswer}
             </>
           )}
         </button>
@@ -112,11 +128,11 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, index }) =
           <div className="mt-4 pt-4 border-t border-gray-200 animate-in fade-in slide-in-from-top-2">
             <div className="flex items-center gap-2 mb-2 text-green-700 font-bold">
               <CheckCircle className="w-5 h-5" />
-              Correct Answer: {question.correctAnswer}
+              {t.correctAnswerLabel} {question.correctAnswer}
             </div>
             <div className="text-gray-700 bg-white p-4 rounded-lg border border-gray-200 text-sm leading-relaxed shadow-sm">
               <h4 className="font-semibold mb-2 text-gray-900 flex items-center gap-2">
-                Analysis & Scientific Reasoning
+                {t.analysisTitle}
               </h4>
               {question.explanation}
             </div>

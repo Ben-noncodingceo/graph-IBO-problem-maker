@@ -12,6 +12,7 @@ const getModels = (t: any): { id: AIModel; name: string; desc: string }[] => [
   { id: 'gemini', ...t.models.gemini },
   { id: 'openai', ...t.models.gpt4 }, // Note: id is 'openai' in store, but concept is GPT-4
   { id: 'deepseek', ...t.models.deepseek },
+  { id: 'deepseek_v3_2', ...t.models.deepseek_v3_2 },
   { id: 'doubao', ...t.models.doubao },
   { id: 'tongyi', ...t.models.tongyi },
 ];
