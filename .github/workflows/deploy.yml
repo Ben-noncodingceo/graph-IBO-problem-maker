@@ -46,7 +46,7 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: 'backend'
           wranglerVersion: '4.52.1'
-          command: 'deploy'
+          command: 'deploy --config wrangler.toml'
         continue-on-error: true
 
       - name: Deploy Backend Worker (Fallback via npx)
@@ -57,7 +57,7 @@ jobs:
         run: |
           npm install -g wrangler@4.52.1
           cd backend
-          npx wrangler deploy --yes
+          npx wrangler deploy src/index.ts --config wrangler.toml --name graph-ibo-problem-maker --compatibility-date 2024-07-01 --yes
         shell: bash
         if: always()
 
