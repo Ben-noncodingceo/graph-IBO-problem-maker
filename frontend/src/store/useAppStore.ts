@@ -58,7 +58,7 @@ export const useAppStore = create<AppState>()(
   persist(
     (set) => ({
       language: 'zh', // Default to Chinese
-      selectedModel: 'deepseek_v3_2',
+      selectedModel: 'gemini',
       apiKeys: {
         gemini: '',
         openai: '',
