@@ -141,7 +141,7 @@ export class QuestionGenerator {
       return src;
     }
   }
-}
+
   private extractOgImage(html: string): string | undefined {
     const m = html.match(/<meta[^>]*property=["']og:image["'][^>]*content=["']([^"'>]+)["'][^>]*>/i);
     return m ? m[1] : undefined;
@@ -156,3 +156,4 @@ export class QuestionGenerator {
     const m = html.match(/<figure[\s\S]*?<img[^>]*src=["']([^"'>]+)["'][^>]*>[\s\S]*?<\/figure>/i);
     return m ? m[1] : undefined;
   }
+}
