@@ -21,7 +21,7 @@ export interface HistoryEntry {
   subject: string;
   paperTitle: string;
   questions: any[];
-  mode?: 'text' | 'image';
+  mode?: 'text' | 'image' | 'analysis';
   language?: Language;
 }
 

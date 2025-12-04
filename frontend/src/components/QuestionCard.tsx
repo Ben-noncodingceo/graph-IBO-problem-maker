@@ -12,11 +12,12 @@ import { ZoomIn, ZoomOut } from 'lucide-react';
 interface QuestionCardProps {
   question: Question;
   index: number;
-  requestedMode?: 'text' | 'image';
+  requestedMode?: 'text' | 'image' | 'analysis';
 }
 
 export const QuestionCard: React.FC<QuestionCardProps> = ({ question, index, requestedMode = 'text' }) => {
   const [showAnswer, setShowAnswer] = useState(false);
+  const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const { t } = useTranslation();
   const [imgLoading, setImgLoading] = useState<boolean>(false);
   const [imgError, setImgError] = useState<boolean>(false);
@@ -127,18 +128,19 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, index, req
             return (
               <div 
                 key={i}
-                className={`flex items-start p-3 rounded-lg border transition-all cursor-default ${
+                className={`flex items-start p-3 rounded-lg border transition-all cursor-pointer ${
                   showAnswer && isCorrect 
                     ? 'bg-green-50 border-green-200 ring-1 ring-green-200' 
                     : 'bg-white border-gray-200 hover:border-blue-300'
                 }`}
+                onClick={() => setSelectedOption(label)}
               >
                 <span className={`w-6 h-6 flex items-center justify-center rounded-full text-xs font-bold mr-3 shrink-0 ${
                   showAnswer && isCorrect ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-500'
                 }`}>
                   {label}
                 </span>
-                <span className={showAnswer && isCorrect ? 'text-green-900 font-medium' : 'text-gray-700'}>
+                <span className={`${showAnswer && isCorrect ? 'text-green-900 font-medium' : 'text-gray-700'} ${selectedOption === label ? 'underline' : ''}`}>
                   <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
                     {opt}
                   </ReactMarkdown>
@@ -148,6 +150,12 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, index, req
           })}
         </div>
       </div>
+
+      {selectedOption && (
+        <div className={`px-6 py-3 ${selectedOption === question.correctAnswer ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'} m-6 rounded-lg text-sm`}> 
+          {selectedOption === question.correctAnswer ? t.answerCorrect : t.answerWrong}
+        </div>
+      )}
 
       <div className="bg-gray-50 px-6 py-4 border-t border-gray-100">
         <button
