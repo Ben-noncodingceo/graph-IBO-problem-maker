@@ -100,7 +100,17 @@ export const HistoryPage: React.FC = () => {
               {expandedId === entry.id && (
                 <div className="border-t border-gray-100 p-4 bg-gray-50 space-y-6">
                   {entry.questions.map((q: any, idx: number) => (
-                    <QuestionCard key={idx} question={q} index={idx} requestedMode={entry.mode || 'text'} />
+                    <div key={idx} className="space-y-3">
+                      <div className="flex justify-end">
+                        <button
+                          onClick={() => downloadLatex(entry, q)}
+                          className="text-xs px-3 py-1.5 rounded-md border border-gray-300 hover:bg-gray-100 text-gray-700"
+                        >
+                          {t.latexDownload}
+                        </button>
+                      </div>
+                      <QuestionCard question={q} index={idx} requestedMode={entry.mode || 'text'} />
+                    </div>
                   ))}
                 </div>
               )}
@@ -111,6 +121,72 @@ export const HistoryPage: React.FC = () => {
     </div>
   );
 };
+
+function sanitizeLatex(s: string | undefined): string {
+  if (!s) return '';
+  return String(s)
+    .replace(/&/g, '\\&')
+    .replace(/%/g, '\\%')
+    .replace(/_/g, '\\_')
+    .replace(/#/g, '\\#')
+    .replace(/\$/g, '\\$')
+    .replace(/\{/g, '\\{')
+    .replace(/\}/g, '\\}')
+    .replace(/\^/g, '\\^')
+    .replace(/~/g, '\\textasciitilde{}');
+}
+
+function buildLatex(entry: any, q: any): string {
+  const title = sanitizeLatex(entry.paperTitle);
+  const subject = sanitizeLatex(entry.subject);
+  const id = sanitizeLatex(q.id);
+  const diff = sanitizeLatex(q.difficulty);
+  const context = sanitizeLatex(q.context);
+  const scenario = sanitizeLatex(q.scenario);
+  const explanation = sanitizeLatex(q.explanation);
+  const paperUrl = sanitizeLatex(q.paperUrl || '');
+  const figureSrc = sanitizeLatex(q.figureSource || '');
+  const opts = (q.options || []).map((o: string) => sanitizeLatex(o));
+  return `\\documentclass[12pt]{article}
+\\usepackage{geometry}
+\\usepackage{amsmath}
+\\usepackage{graphicx}
+\\usepackage{hyperref}
+\\begin{document}
+\\section*{${title}}
+\\textbf{Subject:} ${subject} \\\\
+\\textbf{ID:} ${id} \\\\
+\\textbf{Difficulty:} ${diff} \\\\
+\\subsection*{Context}
+${context}
+\\subsection*{Question}
+${scenario}
+\\subsection*{Options}
+\\begin{enumerate}
+${opts.map((o: string, i: number) => `\\item[${String.fromCharCode(65+i)}.] ${o}`).join('\n')}
+\\end{enumerate}
+\\subsection*{Answer}
+${sanitizeLatex(q.correctAnswer)}
+\\subsection*{Explanation}
+${explanation}
+\\subsection*{Reference}
+${paperUrl ? `\\href{${paperUrl}}{${paperUrl}}` : ''}
+${figureSrc ? `\\\\Figure Source: \\href{${figureSrc}}{${figureSrc}}` : ''}
+\\end{document}`;
+}
+
+function downloadLatex(entry: any, q: any) {
+  const tex = buildLatex(entry, q);
+  const blob = new Blob([tex], { type: 'text/x-tex;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${q.id || 'question'}.tex`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
 
 const HistoryIcon = ({ className }: { className?: string }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 12"/><path d="M3 3v9h9"/><path d="M12 7v5l4 2"/></svg>
