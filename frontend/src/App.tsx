@@ -21,6 +21,7 @@ function App() {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentMode, setCurrentMode] = useState<'text' | 'image'>('text');
   const [selectedPaper, setSelectedPaper] = useState<Paper | null>(null);
+  const [lastLanguageUsed, setLastLanguageUsed] = useState<'zh' | 'en'>('zh');
 
   const { selectedSubject, keywords, selectedModel, apiKeys, addLog, addToHistory } = useAppStore();
   const { t, language } = useTranslation();
@@ -81,6 +82,7 @@ function App() {
       addLog({ type: 'api', message: `Generate API Success`, details: generated });
       
       setQuestions(generated);
+      setLastLanguageUsed(language);
       
       // Save to History
       addToHistory({
@@ -100,6 +102,27 @@ function App() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const run = async () => {
+      if (view !== 'questions') return;
+      if (!selectedPaper) return;
+      if (language === lastLanguageUsed) return;
+      const currentKey = apiKeys[selectedModel] || '';
+      setLoading(true);
+      addLog({ type: 'info', message: `Language changed: regenerating questions (${language})` });
+      try {
+        const generated = await api.generateQuestions(selectedPaper, selectedSubject as string, selectedModel, currentKey, currentMode, language);
+        setQuestions(generated);
+        setLastLanguageUsed(language);
+      } catch (err) {
+        addLog({ type: 'error', message: 'Regenerate on language change failed', details: err });
+      } finally {
+        setLoading(false);
+      }
+    };
+    run();
+  }, [language]);
 
   const handleReset = () => {
     setView('home');

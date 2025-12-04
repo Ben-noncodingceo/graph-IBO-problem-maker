@@ -72,15 +72,16 @@ export class QuestionGenerator {
       if (isImageMode && paper.link) {
         try {
           const html = await this.fetchPageHtml(paper.link);
-          const src = this.extractFirstImageSrc(html);
+          let src = this.extractOgImage(html)
+            || this.extractTwitterImage(html)
+            || this.extractFigureImage(html)
+            || this.extractFirstImageSrc(html);
           if (src) {
             const resolved = this.resolveUrl(paper.link, src);
             extractedFigureUrl = resolved;
             figureSource = paper.link;
           }
-        } catch (e) {
-          // Ignore extraction errors, fallback to AI-only context
-        }
+        } catch (e) {}
       }
 
       const rawResponse = await this.aiClient.chat([
@@ -118,6 +119,8 @@ export class QuestionGenerator {
   private async fetchPageHtml(url: string): Promise<string> {
     const res = await fetch(url, { method: 'GET' });
     if (!res.ok) throw new Error(`Failed to fetch page: ${res.status}`);
+    const ct = res.headers.get('content-type') || '';
+    if (!ct.includes('text/html')) return '';
     return await res.text();
   }
 
@@ -139,3 +142,17 @@ export class QuestionGenerator {
     }
   }
 }
+  private extractOgImage(html: string): string | undefined {
+    const m = html.match(/<meta[^>]*property=["']og:image["'][^>]*content=["']([^"'>]+)["'][^>]*>/i);
+    return m ? m[1] : undefined;
+  }
+
+  private extractTwitterImage(html: string): string | undefined {
+    const m = html.match(/<meta[^>]*name=["']twitter:image["'][^>]*content=["']([^"'>]+)["'][^>]*>/i);
+    return m ? m[1] : undefined;
+  }
+
+  private extractFigureImage(html: string): string | undefined {
+    const m = html.match(/<figure[\s\S]*?<img[^>]*src=["']([^"'>]+)["'][^>]*>[\s\S]*?<\/figure>/i);
+    return m ? m[1] : undefined;
+  }
