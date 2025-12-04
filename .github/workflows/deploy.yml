@@ -57,7 +57,7 @@ jobs:
         run: |
           npm install -g wrangler@4.52.1
           cd backend
-          npx wrangler deploy src/index.ts --config wrangler.toml --name graph-ibo-problem-maker --compatibility-date 2024-07-01 --yes
+          npx wrangler deploy --config wrangler.toml
         shell: bash
         if: always()
 
