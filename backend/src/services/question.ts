@@ -117,7 +117,7 @@ export class QuestionGenerator {
 
       const meta = {
         modeUsed: extractedFigureUrl ? 'image' as const : 'text' as const,
-        imageFailReason: extractedFigureUrl ? undefined : extractionReason
+        imageFailReason: extractedFigureUrl ? undefined : this.classifyImageFailReason(extractionReason)
       };
 
       return { questions: finalQuestions, meta };
@@ -126,6 +126,19 @@ export class QuestionGenerator {
       console.error("Failed to generate questions:", error);
       throw new Error("AI Generation Failed: " + (error as Error).message);
     }
+  }
+
+  private classifyImageFailReason(reason?: string): string | undefined {
+    if (!reason) return undefined;
+    const r = reason.toLowerCase();
+    if (r.includes('non-html')) return 'pdf-only';
+    if (r.includes('404')) return '404';
+    if (r.includes('403')) return '403';
+    if (r.includes('timeout')) return 'timeout';
+    if (r.includes('enotfound') || r.includes('dns')) return 'dns error';
+    if (r.includes('no image tag')) return 'no-image';
+    if (r.includes('failed to fetch')) return 'network';
+    return 'unknown';
   }
 
   private async fetchPageHtml(url: string): Promise<string> {

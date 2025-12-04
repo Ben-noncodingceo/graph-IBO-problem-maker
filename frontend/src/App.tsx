@@ -22,6 +22,7 @@ function App() {
   const [currentMode, setCurrentMode] = useState<'text' | 'image'>('text');
   const [selectedPaper, setSelectedPaper] = useState<Paper | null>(null);
   const [lastLanguageUsed, setLastLanguageUsed] = useState<'zh' | 'en'>('zh');
+  const [questionsMeta, setQuestionsMeta] = useState<any>(null);
 
   const { selectedSubject, keywords, selectedModel, apiKeys, addLog, addToHistory } = useAppStore();
   const { t, language } = useTranslation();
@@ -82,6 +83,7 @@ function App() {
       addLog({ type: 'api', message: `Generate API Success`, details: resp });
       
       setQuestions(resp.questions);
+      setQuestionsMeta(resp.meta || null);
       setLastLanguageUsed(language);
       
       // Save to History
@@ -114,6 +116,7 @@ function App() {
       try {
         const resp = await api.generateQuestions(selectedPaper, selectedSubject as string, selectedModel, currentKey, currentMode, language);
         setQuestions(resp.questions);
+        setQuestionsMeta(resp.meta || null);
         setLastLanguageUsed(language);
       } catch (err) {
         addLog({ type: 'error', message: 'Regenerate on language change failed', details: err });
@@ -254,6 +257,11 @@ function App() {
             <div className="bg-blue-50 p-6 rounded-xl border border-blue-100 mb-8">
               <h3 className="font-bold text-blue-900 mb-1">Generated from:</h3>
               <p className="text-blue-800">{selectedPaper.title}</p>
+              {questionsMeta && (
+                <p className="text-sm text-blue-700 mt-2">
+                  模式：{questionsMeta.modeUsed === 'image' ? '图题' : '文字题'}{questionsMeta.imageFailReason ? `（原因：${questionsMeta.imageFailReason}）` : ''}
+                </p>
+              )}
             </div>
 
             <div className="space-y-8">

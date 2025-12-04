@@ -129,9 +129,20 @@ export default {
         if (mode === 'image' && result.meta.modeUsed === 'text') {
           const searchService = new SearchService(env.SERPAPI_KEY);
           const alts = await searchService.searchPapers(subject, [paper.title]);
+          const preferred = ['arxiv.org','ncbi.nlm.nih.gov','biorxiv.org','nature.com','sciencedirect.com','springer.com'];
+          const score = (u: string) => {
+            try { const host = new URL(u).host; }
+            catch { return 999; }
+            const h = new URL(u).host;
+            for (let i=0;i<preferred.length;i++) { if (h.includes(preferred[i])) return i; }
+            return 999;
+          };
+          const sorted = [...alts].sort((a,b) => score(a.link) - score(b.link));
           let foundUrl: string | undefined;
           let foundSource: string | undefined;
-          for (const cand of alts.slice(0, 5)) {
+          let attempts = 0;
+          for (const cand of sorted.slice(0, 10)) {
+            attempts++;
             try {
               const html = await fetchPageHtml(cand.link);
               if (!html) continue;
@@ -146,6 +157,8 @@ export default {
           if (foundUrl) {
             finalQuestions = finalQuestions.map(q => ({ ...q, figureUrl: foundUrl, figureSource: foundSource }));
             finalMeta = { modeUsed: 'image', imageFailReason: undefined };
+          } else {
+            finalMeta = { modeUsed: 'text', imageFailReason: (finalMeta.imageFailReason ? `${finalMeta.imageFailReason}; fallback exhausted` : 'fallback exhausted') };
           }
         }
         

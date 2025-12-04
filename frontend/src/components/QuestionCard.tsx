@@ -7,6 +7,7 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 import { buildImageProxyUrl } from '../services/api';
+import { ZoomIn, ZoomOut } from 'lucide-react';
 
 interface QuestionCardProps {
   question: Question;
@@ -20,6 +21,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, index, req
   const [imgLoading, setImgLoading] = useState<boolean>(false);
   const [imgError, setImgError] = useState<boolean>(false);
   const [imgSrc, setImgSrc] = useState<string | undefined>(question.figureUrl);
+  const [zoom, setZoom] = useState<boolean>(false);
 
   const difficultyColor = {
     'Easy': 'bg-green-100 text-green-800',
@@ -42,7 +44,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, index, req
               <img 
                 src={imgSrc} 
                 alt={t.imageAlt} 
-                className="rounded-lg border border-gray-200 max-h-64 object-contain bg-white mx-auto"
+                className={"rounded-lg border border-gray-200 object-contain bg-white mx-auto " + (zoom ? 'max-h-[600px] w-full' : 'max-h-64')}
                 onLoad={() => { setImgLoading(false); setImgError(false); }}
                 onError={() => {
                   if (!imgError && question.figureUrl) {
@@ -55,6 +57,14 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, index, req
                   }
                 }}
               />
+              <div className="flex items-center justify-center gap-2 mt-2">
+                <button onClick={() => setZoom(true)} className="text-xs px-2 py-1 rounded border border-gray-300 hover:bg-gray-50 flex items-center gap-1">
+                  <ZoomIn className="w-3 h-3" /> 放大
+                </button>
+                <button onClick={() => setZoom(false)} className="text-xs px-2 py-1 rounded border border-gray-300 hover:bg-gray-50 flex items-center gap-1">
+                  <ZoomOut className="w-3 h-3" /> 缩小
+                </button>
+              </div>
               {imgLoading && (
                 <p className="text-center text-xs text-gray-500 mt-2">Loading image...</p>
               )}
