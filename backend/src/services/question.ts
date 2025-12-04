@@ -71,9 +71,10 @@ export class QuestionGenerator {
     `;
 
     try {
-      if (isImageModeRequested && paper.link) {
+      const sanitizedLink = paper.link ? this.sanitizeLink(paper.link) : '';
+      if (isImageModeRequested && sanitizedLink) {
         try {
-          const html = await this.fetchPageHtml(paper.link);
+          const html = await this.fetchPageHtml(sanitizedLink);
           if (!html) {
             extractionReason = 'non-html content';
           } else {
@@ -82,9 +83,9 @@ export class QuestionGenerator {
               || this.extractFigureImage(html)
               || this.extractFirstImageSrc(html);
             if (src) {
-              const resolved = this.resolveUrl(paper.link, src);
+              const resolved = this.resolveUrl(sanitizedLink, src);
               extractedFigureUrl = resolved;
-              figureSource = paper.link;
+              figureSource = sanitizedLink;
             } else {
               extractionReason = 'no image tag found';
             }
@@ -106,7 +107,19 @@ export class QuestionGenerator {
         jsonStr = jsonStr.replace(/^```/, '').replace(/```$/, '');
       }
 
-      const questions = JSON.parse(jsonStr) as any[];
+      let questions: any[] = [];
+      try {
+        questions = JSON.parse(jsonStr) as any[];
+      } catch {
+        const start = jsonStr.indexOf('[');
+        const end = jsonStr.lastIndexOf(']');
+        if (start >= 0 && end > start) {
+          const slice = jsonStr.slice(start, end + 1);
+          questions = JSON.parse(slice) as any[];
+        } else {
+          throw new Error('AI returned non-JSON content');
+        }
+      }
       
       // Generate ID & Inject Image URL if needed
       const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
@@ -118,7 +131,7 @@ export class QuestionGenerator {
         type: 'Multiple Choice',
         figureUrl: extractedFigureUrl,
         figureSource: figureSource,
-        paperUrl: paper.link
+        paperUrl: sanitizedLink || paper.link
       }));
 
       const meta = {
@@ -131,6 +144,19 @@ export class QuestionGenerator {
     } catch (error) {
       console.error("Failed to generate questions:", error);
       throw new Error("AI Generation Failed: " + (error as Error).message);
+    }
+  }
+
+  private sanitizeLink(url: string): string {
+    try {
+      let u = url.trim().replace(/^`+|`+$/g, '');
+      if (u.startsWith('https://doi.org/')) {
+        // Remove trailing slash that can break DOI resolution
+        u = u.replace(/\/$/, '');
+      }
+      return u;
+    } catch {
+      return url;
     }
   }
 
