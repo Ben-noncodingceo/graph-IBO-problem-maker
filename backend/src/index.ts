@@ -188,6 +188,89 @@ export default {
         return new Response(arrayBuf, { status: 200, headers: { ...corsHeaders, 'Content-Type': ct, 'Cache-Control': 'public, max-age=3600' } });
       }
 
+      // --- Route 4: PK Start ---
+      if (url.pathname === '/api/pk/start' && request.method === 'POST') {
+        const body = await request.json() as any;
+        const { questions = [], mode = 'random', keyword = '' } = body || {};
+        const list = Array.isArray(questions) ? questions : [];
+        const filtered = mode === 'random' ? list : list.filter((q: any) => {
+          const t = `${q.id} ${q.scenario || ''} ${q.context || ''} ${q.explanation || ''}`.toLowerCase();
+          return String(keyword || '').toLowerCase() ? t.includes(String(keyword).toLowerCase()) : true;
+        });
+        const groups: Record<string, any[]> = { 'Easy': [], 'Medium': [], 'Hard': [] };
+        filtered.forEach((q: any) => { if (groups[q.difficulty]) groups[q.difficulty].push(q); });
+        const pickFrom = (arr: any[]) => arr[Math.floor(Math.random() * arr.length)];
+        let left: any = null, right: any = null;
+        for (const key of ['Easy','Medium','Hard']) {
+          if (groups[key].length >= 2) { left = pickFrom(groups[key]); do { right = pickFrom(groups[key]); } while (right.id === left.id); break; }
+        }
+        if (!left || !right) {
+          // fallback: random two
+          if (filtered.length >= 2) {
+            left = pickFrom(filtered);
+            do { right = pickFrom(filtered); } while (right.id === left.id);
+          }
+        }
+        if (!left || !right) {
+          return new Response(JSON.stringify({ error: 'No sufficient questions to start PK' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        }
+        return new Response(JSON.stringify({ left, right }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+
+      // Ensure PK table exists
+      async function ensurePkTable() {
+        try {
+          await env.DB.exec(`CREATE TABLE IF NOT EXISTS pk_ratings (
+            id TEXT PRIMARY KEY,
+            user_id TEXT,
+            rating_type TEXT,
+            qid_winner TEXT,
+            qid_loser TEXT,
+            qid_hard TEXT,
+            qid_easy TEXT,
+            created_at INTEGER
+          );`);
+        } catch {}
+      }
+
+      // --- Route 5: PK Rate ---
+      if (url.pathname === '/api/pk/rate' && request.method === 'POST') {
+        const body = await request.json() as any;
+        const { userId = 'anonymous', qidLeft, qidRight, ratingType, value } = body || {};
+        if (!qidLeft || !qidRight || !ratingType || !value) {
+          return new Response(JSON.stringify({ error: 'Missing fields' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        }
+        await ensurePkTable();
+        const id = Math.random().toString(36).slice(2);
+        const ts = Date.now();
+        let qid_winner = null, qid_loser = null, qid_hard = null, qid_easy = null;
+        if (ratingType === 'goodbad') {
+          if (value === 'good') { qid_winner = qidLeft; qid_loser = qidRight; } else { qid_winner = qidRight; qid_loser = qidLeft; }
+        } else if (ratingType === 'hardeasy') {
+          if (value === 'hard') { qid_hard = qidLeft; qid_easy = qidRight; } else { qid_hard = qidRight; qid_easy = qidLeft; }
+        }
+        await env.DB.prepare(`INSERT INTO pk_ratings (id,user_id,rating_type,qid_winner,qid_loser,qid_hard,qid_easy,created_at) VALUES (?,?,?,?,?,?,?,?)`)
+          .bind(id, userId, ratingType, qid_winner, qid_loser, qid_hard, qid_easy, ts).run();
+        return new Response(JSON.stringify({ ok: true }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+
+      // --- Route 6: PK History ---
+      if (url.pathname === '/api/pk/history' && request.method === 'GET') {
+        const type = url.searchParams.get('type') || 'good';
+        await ensurePkTable();
+        let query = '';
+        if (type === 'good') {
+          query = `SELECT qid_winner AS qid, COUNT(*) AS count, MAX(created_at) AS last FROM pk_ratings WHERE rating_type='goodbad' AND qid_winner IS NOT NULL GROUP BY qid ORDER BY count DESC, last DESC LIMIT 100`;
+        } else if (type === 'hard') {
+          query = `SELECT qid_hard AS qid, COUNT(*) AS count, MAX(created_at) AS last FROM pk_ratings WHERE rating_type='hardeasy' AND qid_hard IS NOT NULL GROUP BY qid ORDER BY count DESC, last DESC LIMIT 100`;
+        } else {
+          return new Response(JSON.stringify({ error: 'Invalid type' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        }
+        const rs = await env.DB.prepare(query).all();
+        const items = (rs?.results || []).map((r: any) => ({ qid: r.qid, count: r.count, last: r.last }));
+        return new Response(JSON.stringify({ items }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+
       return new Response("BioOlyAI Backend API Running", { headers: corsHeaders });
     } catch (err: any) {
       console.error(err);

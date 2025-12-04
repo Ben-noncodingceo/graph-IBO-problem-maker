@@ -54,6 +54,18 @@ export const api = {
       }
     );
     return res.data;
+  },
+  pkStart: async (questions: Question[], mode: 'keyword'|'popular'|'random', keyword?: string): Promise<{ left: Question; right: Question; }> => {
+    const res = await axios.post(`${API_BASE}/pk/start`, { questions, mode, keyword });
+    return res.data;
+  },
+  pkRate: async (payload: { userId: string; qidLeft: string; qidRight: string; ratingType: 'goodbad'|'hardeasy'; value: 'good'|'bad'|'hard'|'easy'; }): Promise<{ ok: true; }> => {
+    const res = await axios.post(`${API_BASE}/pk/rate`, payload);
+    return res.data;
+  },
+  pkHistory: async (type: 'good'|'hard'): Promise<{ items: { qid: string; count: number; last: number; }[] }> => {
+    const res = await axios.get(`${API_BASE}/pk/history`, { params: { type } });
+    return res.data;
   }
 };
 

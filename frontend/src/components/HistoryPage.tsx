@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { useAppStore, useTranslation } from '../store/useAppStore';
 import { QuestionCard } from './QuestionCard';
-import { Calendar, ChevronDown, ChevronRight } from 'lucide-react';
+import { Calendar, ChevronDown, ChevronRight, Sword } from 'lucide-react';
+import { PKMode } from './PKMode';
 
 export const HistoryPage: React.FC = () => {
   const { history } = useAppStore();
   const { t } = useTranslation();
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [query, setQuery] = useState('');
+  const [showPK, setShowPK] = useState(false);
 
   const toggleExpand = (id: string) => {
     setExpandedId(expandedId === id ? null : id);
@@ -40,6 +42,16 @@ export const HistoryPage: React.FC = () => {
         <HistoryIcon className="w-6 h-6 text-blue-600" />
         {t.historyTitle}
       </h2>
+
+      <div className="flex justify-end">
+        <button onClick={()=>setShowPK(true)} className="text-sm px-3 py-1.5 rounded-md border border-blue-300 text-blue-700 hover:bg-blue-50 flex items-center gap-2">
+          <Sword className="w-4 h-4"/> 题目 PK 模式
+        </button>
+      </div>
+
+      {showPK && (
+        <PKMode onClose={() => setShowPK(false)} />
+      )}
 
       <div className="bg-white rounded-xl border border-gray-200 p-4 flex flex-col gap-3">
         <label className="text-sm font-medium text-gray-700">{t.historySearch}</label>
