@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react'
-import { useAppStore, useTranslation } from '../store/useAppStore'
+import { useAppStore } from '../store/useAppStore'
 import { QuestionCard } from './QuestionCard'
 import { api, Question } from '../services/api'
 import { Shuffle, Search, ThumbsUp, Gauge } from 'lucide-react'
@@ -10,7 +10,6 @@ interface PKModeProps {
 
 export const PKMode: React.FC<PKModeProps> = ({ onClose }) => {
   const { history, addLog } = useAppStore()
-  const { t } = useTranslation()
   const [mode, setMode] = useState<'keyword'|'popular'|'random'>('random')
   const [keyword, setKeyword] = useState('')
   const [userId] = useState(() => {
