@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Layout } from './components/Layout';
 import { SubjectSelector } from './components/SubjectSelector';
 import { KeywordInput } from './components/KeywordInput';
@@ -13,7 +13,9 @@ import { Search, Loader2, ArrowRight, ArrowLeft, Settings, RefreshCw } from 'luc
 
 function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [loading, setLoading] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(false); // Changed to boolean, text handled by rotation
+  const [loadingMsgIndex, setLoadingMsgIndex] = useState(0);
+  
   const [view, setView] = useState<'home' | 'results' | 'questions' | 'history' | 'debug'>('home');
   const [papers, setPapers] = useState<Paper[]>([]);
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -22,10 +24,24 @@ function App() {
   const { selectedSubject, keywords, selectedModel, apiKeys, addLog, addToHistory } = useAppStore();
   const { t } = useTranslation();
 
+  // Loading Message Rotation Logic
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (loading) {
+      setLoadingMsgIndex(0); // Reset on start
+      interval = setInterval(() => {
+        setLoadingMsgIndex((prev) => prev + 1);
+      }, 5000);
+    }
+    return () => clearInterval(interval);
+  }, [loading]);
+
+  const currentLoadingMessage = t.loadingMessages[loadingMsgIndex % t.loadingMessages.length];
+
   const handleSearch = async () => {
     if (!selectedSubject) return;
     
-    setLoading(t.searching);
+    setLoading(true);
     addLog({ type: 'info', message: `Searching papers for: ${selectedSubject}`, details: { keywords } });
     
     try {
@@ -38,7 +54,7 @@ function App() {
       alert('Search failed. Please ensure the Backend is running.');
       console.error(err);
     } finally {
-      setLoading(null);
+      setLoading(false);
     }
   };
 
@@ -54,7 +70,7 @@ function App() {
     addLog({ type: 'info', message: `Generating questions using ${selectedModel} (Mode: ${mode})`, details: { paper: paper.title } });
 
     setSelectedPaper(paper);
-    setLoading('Generating Questions... This may take 30s+');
+    setLoading(true); // Start loading animation
     
     try {
       const generated = await api.generateQuestions(paper, selectedSubject, selectedModel, currentKey, mode);
@@ -75,7 +91,7 @@ function App() {
       alert('Generation failed. Check Debug Console for details.');
       console.error(err);
     } finally {
-      setLoading(null);
+      setLoading(false);
     }
   };
 
@@ -126,13 +142,13 @@ function App() {
                 </button>
                 <button
                   onClick={handleSearch}
-                  disabled={!!loading}
-                  className="flex items-center gap-2 bg-gray-900 text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-gray-800 transition-all shadow-lg hover:shadow-xl disabled:opacity-70 disabled:cursor-not-allowed"
+                  disabled={loading}
+                  className="flex items-center gap-2 bg-gray-900 text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-gray-800 transition-all shadow-lg hover:shadow-xl disabled:opacity-70 disabled:cursor-not-allowed min-w-[200px] justify-center"
                 >
                   {loading ? (
                     <>
                       <Loader2 className="w-5 h-5 animate-spin" />
-                      {loading}
+                      <span className="animate-pulse">{currentLoadingMessage}</span>
                     </>
                   ) : (
                     <>
@@ -171,15 +187,17 @@ function App() {
             </div>
             
             {loading ? (
-              <div className="flex flex-col items-center justify-center py-20">
-                 <Loader2 className="w-12 h-12 text-blue-600 animate-spin mb-4" />
-                 <p className="text-gray-600 font-medium">{loading}</p>
+              <div className="flex flex-col items-center justify-center py-20 animate-in fade-in">
+                 <Loader2 className="w-16 h-16 text-blue-600 animate-spin mb-6" />
+                 <p className="text-xl text-gray-700 font-medium animate-pulse text-center px-4">
+                   {currentLoadingMessage}
+                 </p>
               </div>
             ) : (
               <PaperList 
                 papers={papers} 
                 onSelect={handleGenerate} 
-                isGenerating={!!loading}
+                isGenerating={loading}
               />
             )}
           </div>

@@ -36,6 +36,17 @@ export const TRANSLATIONS = {
     textMode: 'Text Only',
     imageMode: 'With Figure',
     
+    loadingMessages: [
+      "AI is thinking...", 
+      "AI is hallucinating...", 
+      "AI is plotting world domination...", 
+      "AI is disappointed in humanity...", 
+      "AI hit a dead end...", 
+      "AI thinks humans might be okay...", 
+      "AI is out of ideas...", 
+      "AI learned emoji 🤖"
+    ],
+    
     models: {
       gemini: { name: 'Google Gemini (gemini-3-pro-preview)', desc: 'Best overall performance & speed' },
       gpt4: { name: 'OpenAI GPT-4', desc: 'High reasoning capability' },
@@ -78,6 +89,17 @@ export const TRANSLATIONS = {
     noHistory: '暂无生成记录。快去探索文献吧！',
     textMode: '纯文字题',
     imageMode: '图表题',
+    
+    loadingMessages: [
+      "AI 正在思考", 
+      "AI 正在编造", 
+      "AI 准备对抗人类", 
+      "AI 对人类失望", 
+      "AI 的思路陷入死胡同", 
+      "AI 觉得也许人类还可以", 
+      "AI 想不出答案了", 
+      "AI 学会了emoji 🤖"
+    ],
     
     models: {
       gemini: { name: 'Google Gemini (gemini-3-pro-preview)', desc: '综合性能与速度最佳' },
