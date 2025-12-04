@@ -1,6 +1,6 @@
 import React from 'react';
 import { Paper } from '../services/api';
-import { FileText, Calendar, User, ArrowRight } from 'lucide-react';
+import { Calendar, User, ArrowRight } from 'lucide-react';
 
 interface PaperListProps {
   papers: Paper[];

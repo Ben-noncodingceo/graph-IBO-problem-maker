@@ -1,16 +1,6 @@
 import React, { useState } from 'react';
 import { Question } from '../services/api';
-import { ChevronDown, ChevronUp, CheckCircle, HelpCircle } from 'lucide-react';
-import ReactMarkdown from 'react-markdown';
-import RemarkMath from 'remark-math';
-import RehypeKatex from 'rehype-katex';
-
-// Note: In a real project, we'd install react-markdown remark-math rehype-katex
-// For this MVP, I'll use simple text rendering or assume libraries are available if I installed them.
-// I installed `react-katex` earlier, but `react-markdown` is better for mixed content.
-// Since I only installed `react-katex`, I will use a simpler approach or just render text for now.
-// Let's stick to text for simplicity unless I install more deps.
-// Actually, let's use a simple renderer that splits by $$ for latex.
+import { ChevronUp, CheckCircle, HelpCircle } from 'lucide-react';
 
 interface QuestionCardProps {
   question: Question;
