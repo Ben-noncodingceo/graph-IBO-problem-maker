@@ -1,7 +1,10 @@
 import axios from 'axios';
 import { AIModel } from '../store/useAppStore';
 
-const API_BASE = 'http://localhost:8787/api';
+// Determine API Base URL based on environment
+const API_BASE = import.meta.env.DEV 
+  ? 'http://localhost:8787/api' 
+  : 'https://graph-ibo-problem-maker.peungsun.workers.dev/api';
 
 export interface Paper {
   title: string;
@@ -19,6 +22,7 @@ export interface Question {
   options: string[];
   correctAnswer: string;
   explanation: string;
+  analysis: string; // Add alias for explanation/analysis display
 }
 
 export const api = {
@@ -43,6 +47,8 @@ export const api = {
         }
       }
     );
+    // Ensure we handle potentially different response structures or alias fields if needed
+    // The backend returns { questions: Question[] }
     return res.data.questions;
   }
 };

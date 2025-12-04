@@ -1,4 +1,4 @@
-name = "bio-oly-backend"
+name = "graph-ibo-problem-maker"
 main = "src/index.ts"
 compatibility_date = "2024-07-01"
 
