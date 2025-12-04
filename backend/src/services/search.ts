@@ -26,23 +26,33 @@ export class SearchService {
         const data = await res.json() as any;
 
         if (data.organic_results) {
-          const results = data.organic_results.map((r: any) => ({
+          const raw = data.organic_results.map((r: any) => ({
             title: r.title,
             link: r.link,
             snippet: r.snippet,
             year: r.publication_info?.summary?.match(/\d{4}/)?.[0] || 'Recent',
             authors: r.publication_info?.summary?.split('-')[0]?.trim() || 'Unknown'
           }));
-          return this.shuffle(results).slice(0, 7);
+          const results = raw.filter((p: Paper) => !!p.link && /^https?:\/\//i.test(p.link));
+          const sorted = this.filterPreferredDomains(results);
+          return sorted.slice(0, 7);
         }
       } catch (e) {
         console.error("Search API failed, falling back to mock", e);
       }
     }
 
-    // Mock Fallback
-    console.log(`[Mock Search] Query: ${query}`);
-    return this.getMockPapers(subject);
+    // Fallback: use Crossref public API for real, verifiable links (no API key required)
+    try {
+      const results = await this.searchCrossref(query, 15);
+      const filtered = this.filterPreferredDomains(results);
+      const final = (filtered.length >= 7 ? filtered : results).slice(0, 7);
+      return final;
+    } catch (e) {
+      console.error("Crossref fallback failed", e);
+      // Final fallback to mock if everything fails
+      return this.getMockPapers(subject);
+    }
   }
 
   private getMockPapers(subject: string): Paper[] {
@@ -130,5 +140,38 @@ export class SearchService {
       [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
     return shuffled;
+  }
+
+  private async searchCrossref(query: string, rows: number): Promise<Paper[]> {
+    const url = new URL('https://api.crossref.org/works');
+    url.searchParams.set('query', query);
+    url.searchParams.set('rows', String(rows));
+    url.searchParams.set('filter', 'from-pub-date:2015');
+    const res = await fetch(url.toString(), { method: 'GET' });
+    if (!res.ok) throw new Error(`Crossref ${res.status}`);
+    const data = await res.json() as any;
+    const items = (data?.message?.items || []) as any[];
+    const papers: Paper[] = items.map((it) => {
+      const title = Array.isArray(it.title) ? it.title[0] : (it.title || 'Untitled');
+      const year = Array.isArray(it.issued?.['date-parts']) ? it.issued['date-parts'][0]?.[0] : undefined;
+      const authors = Array.isArray(it.author) ? it.author.slice(0, 3).map((a: any) => `${a.family || a.name || ''} ${a.given || ''}`.trim()).join(', ') : undefined;
+      const doi = it.DOI ? `https://doi.org/${it.DOI}` : undefined;
+      const urlField = it.URL || undefined;
+      const link = doi || urlField || '';
+      const container = Array.isArray(it['container-title']) ? it['container-title'][0] : it['container-title'];
+      const snippet = container ? `${container}${year ? ' (' + year + ')' : ''}` : (it.publisher || '');
+      return { title, link, snippet, year: year ? String(year) : undefined, authors } as Paper;
+    }).filter(p => !!p.link && /^https?:\/\//i.test(p.link));
+    return papers;
+  }
+
+  private filterPreferredDomains(results: Paper[]): Paper[] {
+    const preferred = [
+      'doi.org','arxiv.org','ncbi.nlm.nih.gov','biorxiv.org','nature.com','sciencedirect.com','springer.com','cell.com','science.org','pnas.org','wiley.com'
+    ];
+    const score = (u: string) => {
+      try { const host = new URL(u).host; return preferred.findIndex(d => host.includes(d)); } catch { return 999; }
+    };
+    return [...results].sort((a,b) => score(a.link) - score(b.link));
   }
 }
