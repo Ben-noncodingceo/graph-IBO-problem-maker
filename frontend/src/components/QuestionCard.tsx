@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Question } from '../services/api';
 import { ChevronUp, CheckCircle, HelpCircle, FileText, Image as ImageIcon, AlertTriangle } from 'lucide-react';
 import { useTranslation } from '../store/useAppStore';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
+import remarkGfm from 'remark-gfm';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 import { buildImageProxyUrl } from '../services/api';
@@ -29,6 +30,15 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, index, req
     'Medium': 'bg-yellow-100 text-yellow-800',
     'Hard': 'bg-red-100 text-red-800'
   }[question.difficulty] || 'bg-gray-100 text-gray-800';
+
+  const normalizeAsciiTable = (s?: string) => {
+    if (!s) return '';
+    let x = s;
+    x = x.replace(/\|\|/g, '|');
+    x = x.replace(/\|\s*-{2,}\s*\|/g, '|---|');
+    return x;
+  };
+  const normalizedContext = useMemo(() => normalizeAsciiTable(question.context), [question.context]);
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
@@ -94,9 +104,18 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, index, req
           )}
           
           {question.context && (
-            <div className="text-sm text-slate-700 leading-relaxed font-serif bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
-              <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-                {question.context}
+            <div className="text-sm text-slate-700 leading-relaxed font-serif bg-white p-4 rounded-lg border border-slate-200 shadow-sm overflow-x-auto">
+              <ReactMarkdown remarkPlugins={[remarkMath, remarkGfm]} rehypePlugins={[rehypeKatex]}
+                components={{
+                  table: ({children}) => (<table className="min-w-full border-collapse border border-gray-300 text-sm">{children}</table>),
+                  thead: ({children}) => (<thead className="bg-gray-100">{children}</thead>),
+                  tbody: ({children}) => (<tbody>{children}</tbody>),
+                  tr: ({children}) => (<tr className="border-t border-gray-300">{children}</tr>),
+                  th: ({children}) => (<th className="px-3 py-1.5 text-left font-semibold border-r border-gray-300">{children}</th>),
+                  td: ({children}) => (<td className="px-3 py-1.5 border-r border-gray-300 align-top">{children}</td>),
+                }}
+              >
+                {normalizedContext}
               </ReactMarkdown>
             </div>
           )}
@@ -114,7 +133,16 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, index, req
         <div className="prose max-w-none text-gray-900 mb-6">
           <p className="font-medium text-lg">
             <span className="text-gray-400 mr-2">{index + 1}.</span>
-            <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+            <ReactMarkdown remarkPlugins={[remarkMath, remarkGfm]} rehypePlugins={[rehypeKatex]}
+              components={{
+                table: ({children}) => (<table className="min-w-full border-collapse border border-gray-300 text-sm">{children}</table>),
+                thead: ({children}) => (<thead className="bg-gray-100">{children}</thead>),
+                tbody: ({children}) => (<tbody>{children}</tbody>),
+                tr: ({children}) => (<tr className="border-t border-gray-300">{children}</tr>),
+                th: ({children}) => (<th className="px-3 py-1.5 text-left font-semibold border-r border-gray-300">{children}</th>),
+                td: ({children}) => (<td className="px-3 py-1.5 border-r border-gray-300 align-top">{children}</td>),
+              }}
+            >
               {question.scenario}
             </ReactMarkdown>
           </p>
@@ -141,7 +169,16 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, index, req
                   {label}
                 </span>
                 <span className={`${showAnswer && isCorrect ? 'text-green-900 font-medium' : 'text-gray-700'} ${selectedOption === label ? 'underline' : ''}`}>
-                  <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+                  <ReactMarkdown remarkPlugins={[remarkMath, remarkGfm]} rehypePlugins={[rehypeKatex]}
+                    components={{
+                      table: ({children}) => (<table className="min-w-full border-collapse border border-gray-300 text-sm">{children}</table>),
+                      thead: ({children}) => (<thead className="bg-gray-100">{children}</thead>),
+                      tbody: ({children}) => (<tbody>{children}</tbody>),
+                      tr: ({children}) => (<tr className="border-t border-gray-300">{children}</tr>),
+                      th: ({children}) => (<th className="px-3 py-1.5 text-left font-semibold border-r border-gray-300">{children}</th>),
+                      td: ({children}) => (<td className="px-3 py-1.5 border-r border-gray-300 align-top">{children}</td>),
+                    }}
+                  >
                     {opt}
                   </ReactMarkdown>
                 </span>
@@ -190,7 +227,16 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, index, req
                   {t.originalPaperLabel}: <a href={question.paperUrl} target="_blank" rel="noreferrer" className="underline">{question.paperUrl}</a>
                 </p>
               )}
-              <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+              <ReactMarkdown remarkPlugins={[remarkMath, remarkGfm]} rehypePlugins={[rehypeKatex]}
+                components={{
+                  table: ({children}) => (<table className="min-w-full border-collapse border border-gray-300 text-sm">{children}</table>),
+                  thead: ({children}) => (<thead className="bg-gray-100">{children}</thead>),
+                  tbody: ({children}) => (<tbody>{children}</tbody>),
+                  tr: ({children}) => (<tr className="border-t border-gray-300">{children}</tr>),
+                  th: ({children}) => (<th className="px-3 py-1.5 text-left font-semibold border-r border-gray-300">{children}</th>),
+                  td: ({children}) => (<td className="px-3 py-1.5 border-r border-gray-300 align-top">{children}</td>),
+                }}
+              >
                 {question.explanation}
               </ReactMarkdown>
             </div>
